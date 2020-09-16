@@ -1,0 +1,18 @@
+
+.edit-main {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: auto 30%;
+    background-color: black;
+
+    .preview-container {
+        grid-column: 1;
+        width: 100%;
+    }
+
+    .sidabar-container {
+        grid-column: 2;
+        width: 100%;
+    }
+}

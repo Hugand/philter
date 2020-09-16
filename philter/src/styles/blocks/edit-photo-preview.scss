@@ -1,0 +1,52 @@
+
+.preview-container {
+    background-color: white;
+    border-top-right-radius: 20px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+
+    header {
+        display: flex;
+        flex-direction: row;
+
+        button {
+            border: 1px solid black;
+            border-radius: 5px;
+            padding: 0.5rem;
+            font-weight: 200;
+            transition: .1s;
+
+            &:hover {
+                cursor: pointer;
+                border-width: 2px;
+                font-weight: 400;
+            }
+        }
+    }
+
+    .image-container {
+        width: auto;
+        display: block;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        width:70%;
+        height: 70%;
+
+        img {
+            object-fit: contain;
+            width:100%;
+            height: 100%;
+            box-shadow: 0px 0px 20px 2px #1d282e1a;
+        }
+
+        .image-name {
+            margin-left: auto;
+            color: black;
+            font-weight: 300;
+            font-size: 1.25rem;
+            margin-top: 1rem;
+        }
+    }
+}
