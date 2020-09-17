@@ -9,8 +9,12 @@ function EditPhotoPreview(props) {
         </header>
 
         <article className="image-container">
-            <img src={require("../../assets/images/photo_unavailable.png")}/>
-            <h4 className="image-name">Photo name.jpg</h4>
+          {
+            props.image
+            ? <img src={URL.createObjectURL(props.image)}/>
+            : <img src={require("../../assets/images/photo_unavailable.png")}/>
+          }
+          <h4 className="image-name">{props.image.name}</h4>
         </article>
     </section>
   );
