@@ -7,7 +7,7 @@ function EditPhotoSidebar(props) {
     exposure: 0,
     contrast: 0,
     hue: 0,
-    saturatiion: 0,
+    saturation: 0,
     sharpness: 0,
     highlights: 0,
     shadows: 0,

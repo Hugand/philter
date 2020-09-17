@@ -12,6 +12,7 @@ const initialState = {
 }
 
 const reducer = (state, action) => {
+  console.log(action.newImage)
   switch(action.type){
     case 'changeImage':
       return {
