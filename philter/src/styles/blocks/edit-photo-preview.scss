@@ -11,17 +11,7 @@
         flex-direction: row;
 
         button {
-            border: 1px solid black;
-            border-radius: 5px;
-            padding: 0.5rem;
-            font-weight: 200;
-            transition: .1s;
-
-            &:hover {
-                cursor: pointer;
-                border-width: 2px;
-                font-weight: 400;
-            }
+            margin: 0 0.5rem;
         }
     }
 

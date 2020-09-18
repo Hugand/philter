@@ -8,16 +8,42 @@ import EditPhotoScreen from './components/views/edit-photo-screen';
 import { StateProvider } from './state'
 
 const initialState = {
-  image: null
+  imageName: '',
+  image: null,
+  canvasCtx: null,
+  imageFilters: {
+    exposure: 0,
+    contrast: 0,
+    hue: 0,
+    saturation: 0,
+    sharpness: 0,
+    highlights: 0,
+    shadows: 0,
+    tone: 0,
+    noise: 0
+  }
 }
 
 const reducer = (state, action) => {
-  console.log(action.newImage)
   switch(action.type){
     case 'changeImage':
       return {
         ...state,
-        image: action.newImage
+        image: action.newImage,
+        imageName: action.newImageName
+      }
+    case 'changeFilter':
+      return {
+        ...state,
+        imageFilters: {
+          ...state.imageFilters,
+          [action.filterType]: action.newFilterValue
+        }
+      }
+    case 'changeImageData':
+      return {
+        ...state,
+        canvasCtx: action.newCanvasCtx
       }
     default:
       return state

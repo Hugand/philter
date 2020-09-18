@@ -1,43 +1,65 @@
 import React, { useEffect, useRef, useState } from 'react';
-// import '../../styles/blocks/edit-photo-preview.scss';
+import { useStateValue } from  '../../state'
 
 function Canvas(props) {
+    const [ { canvasCtx, imageFilters, image }, dispatch ] = useStateValue()
     const canvasRef = useRef(null)
-    const image = new Image()
+    const imageObject = new Image()
+    imageObject.src = URL.createObjectURL(image)
 
     const [ canvasWidth, setCanvasWidth ] = useState(window.innerWidth)
     const [ canvasHeight, setCanvasHeight ] = useState(window.innerHeight)
-    
-    let offsetX, offsetY
+
+    const [ canvas, setCanvas ] = useState(null)
+    const [ ctx, setCtx ] = useState(null)
 
     useEffect(() => {
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext('2d')
-        image.src = URL.createObjectURL(props.image)
-        image.onload = () => {
-            const [ newCanvasWidth, newCanvasHeight, offsetX, offsetY ] = scaleToFit(image, canvas, ctx)
+        console.log("useEffect canvas")
+        // console.log(props.image)
+        setCanvas(canvasRef.current)
+        if(canvas)
+            setCtx(canvas.getContext('2d'))
 
-            setCanvasWidth(newCanvasWidth)
-            setCanvasHeight(newCanvasHeight)
-            
-            const id = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
-            
-            for(let i = 0; i < id.data.length; i += 4){
-                id.data[i] = 255
-                id.data[i+1] = 0
-                id.data[i+2] = 0
-                id.data[i+3] = 255
+        if(canvas && ctx)
+            imageObject.onload = () => {
+                const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas, ctx)
+                ctx.drawImage(imageObject, 0, 0, canvasWidth, canvasHeight);
+
+                setCanvasWidth(newCanvasWidth)
+                setCanvasHeight(newCanvasHeight)
+
+
+                applyExposure(ctx, canvasWidth, canvasHeight, imageFilters)
             }
+    }, [imageObject])
+
+    /*
+        TODO: Try to find a way to fix this ;)
+    */
+    // useEffect(() => {
+    //     if(canvas && ctx && imageObject) {
             
-            ctx.putImageData(id, 0, 0) 
-        }
-    }, null)
+    //     }
+    // }, [imageFilters])
 
     return <canvas
         ref={canvasRef}
         width={canvasWidth}
         height={canvasHeight}
         {...props} />;
+}
+
+function applyExposure(ctx, canvasWidth, canvasHeight, imageFilters){
+    const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
+    
+    for(let i = 0; i < imageData.data.length; i += 4){
+        imageData.data[i] += 1 * imageFilters.exposure
+        imageData.data[i+1] += 1 * imageFilters.exposure
+        imageData.data[i+2] += 1 * imageFilters.exposure
+        imageData.data[i+3] = 255
+    }
+    
+    ctx.putImageData(imageData, 0, 0) 
 }
 
 function scaleToFit(img, canvas, ctx){
@@ -50,10 +72,8 @@ function scaleToFit(img, canvas, ctx){
     const canvasWidth = img.width * scale
     const canvasHeight = img.height * scale
 
-    console.log(canvasWidth, canvasHeight)
-
-    ctx.drawImage(img, x, y, canvasWidth, canvasHeight);
-    return [ canvasWidth, canvasHeight, x, y ]
+    // ctx.drawImage(img, x, y, canvasWidth, canvasHeight);
+    return [ canvasWidth, canvasHeight ]
 }
 
 export default Canvas;

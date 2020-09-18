@@ -1,75 +1,93 @@
 import React, { useState } from 'react';
 import '../../styles/blocks/edit-photo-sidebar.scss';
 import SliderComponent from '../atoms/slider';
+import { useStateValue } from '../../state'
 
 function EditPhotoSidebar(props) {
-  const [state, setState] = useState({
-    exposure: 0,
-    contrast: 0,
-    hue: 0,
-    saturation: 0,
-    sharpness: 0,
-    highlights: 0,
-    shadows: 0,
-    tone: 0,
-    noise: 0
-  })
+  const [ {imageFilters}, dispatch ] = useStateValue()
 
   return (
     <section className={ props.class } >
 
       <SliderComponent
         label="Exposure"
-        value={state.exposure}
-        setValue={({x}) => setState({...state, exposure: x})}
+        value={imageFilters.exposure}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'exposure',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Contrast"
-        value={state.contrast}
-        setValue={({x}) => setState({...state, contrast: x})}
+        value={imageFilters.contrast}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'contrast',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Hue"
-        value={state.hue}
-        setValue={({x}) => setState({...state, hue: x})}
+        value={imageFilters.hue}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'hue',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Saturation"
-        value={state.saturation}
-        setValue={({x}) => setState({...state, saturation: x})}
+        value={imageFilters.saturation}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'saturation',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Sharpness"
-        value={state.sharpness}
-        setValue={({x}) => setState({...state, sharpness: x})}
+        value={imageFilters.sharpness}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'sharpness',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Highlights"
-        value={state.highlights}
-        setValue={({x}) => setState({...state, highlights: x})}
+        value={imageFilters.highlights}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'highlights',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Shadows"
-        value={state.shadows}
-        setValue={({x}) => setState({...state, shadows: x})}
+        value={imageFilters.shadows}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'shadows',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Tone"
-        value={state.tone}
-        setValue={({x}) => setState({...state, tone: x})}
+        value={imageFilters.tone}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'tone',
+          newFilterValue: x})}
       ></SliderComponent>
 
       <SliderComponent
         label="Noise"
-        value={state.noise}
-        setValue={({x}) => setState({...state, noise: x})}
+        value={imageFilters.noise}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'noise',
+          newFilterValue: x})}
       ></SliderComponent>
 
     </section>
