@@ -28,33 +28,6 @@ function EditPhotoSidebar(props) {
       ></SliderComponent>
 
       <SliderComponent
-        label="Hue"
-        value={imageFilters.hue}
-        setValue={({x}) => dispatch({
-          type: 'changeFilter',
-          filterType: 'hue',
-          newFilterValue: x})}
-      ></SliderComponent>
-
-      <SliderComponent
-        label="Saturation"
-        value={imageFilters.saturation}
-        setValue={({x}) => dispatch({
-          type: 'changeFilter',
-          filterType: 'saturation',
-          newFilterValue: x})}
-      ></SliderComponent>
-
-      <SliderComponent
-        label="Sharpness"
-        value={imageFilters.sharpness}
-        setValue={({x}) => dispatch({
-          type: 'changeFilter',
-          filterType: 'sharpness',
-          newFilterValue: x})}
-      ></SliderComponent>
-
-      <SliderComponent
         label="Highlights"
         value={imageFilters.highlights}
         setValue={({x}) => dispatch({
@@ -73,11 +46,38 @@ function EditPhotoSidebar(props) {
       ></SliderComponent>
 
       <SliderComponent
+        label="Hue"
+        value={imageFilters.hue}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'hue',
+          newFilterValue: x})}
+      ></SliderComponent>
+
+      <SliderComponent
+        label="Saturation"
+        value={imageFilters.saturation}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'saturation',
+          newFilterValue: x})}
+      ></SliderComponent>
+
+      <SliderComponent
         label="Tone"
         value={imageFilters.tone}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
           filterType: 'tone',
+          newFilterValue: x})}
+      ></SliderComponent>
+
+      <SliderComponent
+        label="Sharpness"
+        value={imageFilters.sharpness}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'sharpness',
           newFilterValue: x})}
       ></SliderComponent>
 

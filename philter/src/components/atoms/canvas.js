@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { applyExposure, applyContrast } from '../../helpers/filters';
 import { useStateValue } from  '../../state'
 
 function Canvas(props) {
@@ -23,13 +24,12 @@ function Canvas(props) {
         if(canvas && ctx)
             imageObject.onload = () => {
                 const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas, ctx)
-                ctx.drawImage(imageObject, 0, 0, canvasWidth, canvasHeight);
 
                 setCanvasWidth(newCanvasWidth)
                 setCanvasHeight(newCanvasHeight)
 
 
-                applyExposure(ctx, canvasWidth, canvasHeight, imageFilters)
+                applyFilters(ctx, canvasWidth, canvasHeight, imageFilters)
             }
     }, [imageObject])
 
@@ -49,14 +49,15 @@ function Canvas(props) {
         {...props} />;
 }
 
-function applyExposure(ctx, canvasWidth, canvasHeight, imageFilters){
+function applyFilters(ctx, canvasWidth, canvasHeight, imageFilters){
     const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
+
+    const { exposure, contrast } = imageFilters
+    const contrastFactor = (259*(contrast + 255))/(255*(259 - contrast))
     
     for(let i = 0; i < imageData.data.length; i += 4){
-        imageData.data[i] += 1 * imageFilters.exposure
-        imageData.data[i+1] += 1 * imageFilters.exposure
-        imageData.data[i+2] += 1 * imageFilters.exposure
-        imageData.data[i+3] = 255
+        applyExposure(imageData.data, i, exposure)
+        applyContrast(imageData.data, i, contrastFactor)
     }
     
     ctx.putImageData(imageData, 0, 0) 
@@ -72,7 +73,7 @@ function scaleToFit(img, canvas, ctx){
     const canvasWidth = img.width * scale
     const canvasHeight = img.height * scale
 
-    // ctx.drawImage(img, x, y, canvasWidth, canvasHeight);
+    ctx.drawImage(img, x, y, canvasWidth, canvasHeight);
     return [ canvasWidth, canvasHeight ]
 }
 
