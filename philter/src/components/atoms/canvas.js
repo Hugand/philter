@@ -1,39 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { applyExposure, applyContrast, applyShadowHighlightCorrection } from '../../helpers/filters';
 import { useStateValue } from  '../../state'
-import { loadWasm } from '../../helpers/wasm';
 
 function Canvas(props) {
-    const [ { wasm, imageFilters, image }, dispatch ] = useStateValue()
-    const [ w, setW ] = useState(null)
-    const canvasRef = useRef(null)
+    const [ { imageFilters, image }, dispatch ] = useStateValue()
     const imageObject = new Image()
-
-    const [ worker, setWorker ] = useState()
-  
-    const [ isWorkerRunning, setIsWorkerRunning ] = useState(false)
-
     const [imageData, setImageData] = useState()
-    
 
+    const canvasRef = useRef(null)
+    const [ canvas, setCanvas ] = useState(null)
+    const [ ctx, setCtx ] = useState(null)
     const [ canvasWidth, setCanvasWidth ] = useState(window.innerWidth)
     const [ canvasHeight, setCanvasHeight ] = useState(window.innerHeight)
 
-    const [ canvas, setCanvas ] = useState(null)
-    const [ ctx, setCtx ] = useState(null)
-
+    const [ worker, setWorker ] = useState()
     const [ applyFilterTimeout, setApplyFilterTimeout ] = useState()
-
-    // useEffect(() => {
-    //     loadWasm().then(wasm => {
-    //       dispatch({
-    //         type: "changeWasm",
-    //         newWasm: wasm
-    //       })
-    //       console.log(wasm)
-    //       setW(wasm)
-    //     })
-    // }, [])
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -41,61 +21,42 @@ function Canvas(props) {
         setCanvas(canvas)
         setCtx(ctx)
         imageObject.onload = () => {
-            const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas, ctx)
-
-            const workerBuf = new Worker('./workers/worker.js')
+            const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas)
 
             setCanvasWidth(newCanvasWidth)
             setCanvasHeight(newCanvasHeight)
+
             ctx.drawImage(imageObject, 1, 1, newCanvasWidth-2, newCanvasHeight-2);
             setImageData(ctx.getImageData(0, 0, newCanvasWidth, newCanvasHeight))
 
-            workerBuf.onmessage = e => {
-                if(e.data.filtered)
-                    ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), newCanvasWidth, newCanvasHeight), 0, 0)
-            };
-            setWorker(workerBuf)
-
+            setWorkerObject(ctx, newCanvasWidth, newCanvasHeight)
         }
         imageObject.src = URL.createObjectURL(image)
     }, [])
 
+    const setWorkerObject = (ctx, canvasWidth, canvasHeight) => {
+        const workerBuf = new Worker('./workers/worker.js')
+
+        workerBuf.onmessage = e => {
+            if(e.data.filtered)
+                ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), canvasWidth, canvasHeight), 0, 0)
+        };
+        setWorker(workerBuf)
+    }
+
     // Using timeouts here to avoid web worker overload
     useEffect(() => {
         clearTimeout(applyFilterTimeout)
-        console.log("Stopped filtering")
-
-        setApplyFilterTimeout(setTimeout(() => {
-            console.log("filtering")
-            if(canvas && ctx && imageData) {
-                let img = new ImageData(imageData.data, canvasWidth, canvasHeight)
-                // ctx.putImageData(img, 0, 0) 
-                
-                worker.postMessage({
-                    img: img.data,
-                    imageFilters,
-                    canvasWidth,
-                });
-            }
-        }, 500))
+        setApplyFilterTimeout(
+            setTimeout(() => {
+                if(canvas && ctx && imageData)
+                    worker.postMessage({
+                        img: imageData.data,
+                        imageFilters,
+                        canvasWidth,
+                    });
+            }, 300))
     }, [imageFilters])
-
-
-
-    const apply = async (
-        img,
-        { exposure, contrast, highlights, shadows }
-    ) => {
-        let a = w.apply_filters(
-            img.data,
-            exposure,
-            contrast,
-            highlights,
-            shadows,
-            getArrayRelSize(canvasWidth)
-        )
-        ctx.putImageData(new ImageData(new Uint8ClampedArray(a), canvasWidth, canvasHeight), 0, 0)
-    }
 
     return <canvas
         ref={canvasRef}
@@ -104,29 +65,7 @@ function Canvas(props) {
         {...props} />;
 }
 
-function getArrayRelSize(size) {
-    return (Math.floor(size)-2)*4
-}
-
-
-
-function applyFilters(ctx, canvasWidth, canvasHeight, imageFilters){
-    const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
-
-    const { exposure, contrast, shadows, highlights } = imageFilters
-    const contrastFactor = (259*(contrast + 255))/(255*(259 - contrast))
-    
-    for(let i = 0; i < imageData.data.length; i += 4){
-        applyExposure(imageData.data, i, exposure)
-        applyContrast(imageData.data, i, contrastFactor)
-        // if(shadows !== 0 || highlights !== 0)
-            applyShadowHighlightCorrection(imageData.data, canvasWidth-2, canvasHeight-2)
-    }
-
-    ctx.putImageData(imageData, 0, 0) 
-}
-
-function scaleToFit(img, canvas, ctx){
+function scaleToFit(img, canvas){
     // get the scale
     var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
     // get the top left position of the image

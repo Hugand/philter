@@ -1,7 +1,7 @@
-importScripts("./wasm/wasm_philter.js");
+importScripts("./wasm-philter/js/wasm_philter.js");
 // loadWasm().then(w => {wasm = w}); 
 delete WebAssembly.instantiateStreaming;
-wasmPhilter("./wasm/wasm_philter_bg.wasm")
+wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
 .then(wasm => {
   const { apply_filters } = wasmPhilter
   // postMessage("BACK TO YOU BITCH!");
@@ -21,7 +21,6 @@ wasmPhilter("./wasm/wasm_philter_bg.wasm")
         arrayRelWidth
     )
     postMessage({
-      t: "BACK TO YOU BITCH!",
       filtered
     });
   };

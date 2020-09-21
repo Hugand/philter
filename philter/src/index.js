@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Route, Link, BrowserRouter as Router } from 'react-router-dom'
+import { Route, BrowserRouter as Router } from 'react-router-dom'
 import './index.scss';
 import HomeScreen from './components/views/home-screen';
 import * as serviceWorker from './serviceWorker';
@@ -20,8 +20,7 @@ const initialState = {
     shadows: 0,
     tone: 0,
     noise: 0
-  },
-  wasm: null
+  }
 }
 
 const reducer = (state, action) => {
@@ -40,11 +39,8 @@ const reducer = (state, action) => {
           [action.filterType]: action.newFilterValue
         }
       }
-    case 'changeWasm':
-      return {
-        ...state,
-        canvasCtx: action.newWasm
-      }
+    case 'resetData':
+      return initialState
     default:
       return state
   }
