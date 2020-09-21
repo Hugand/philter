@@ -4,7 +4,7 @@ import Slider from 'react-input-slider';
 function SliderComponent({ label, value, setValue }) {
     return (
         <div className="slider-container">
-            <label className="slider-label">{ label }</label>
+            <label className="slider-label">{ label } - { value }</label>
             <Slider
                 x={ value }
                 xmin={-100}

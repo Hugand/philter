@@ -10,7 +10,6 @@ import { StateProvider } from './state'
 const initialState = {
   imageName: '',
   image: null,
-  canvasCtx: null,
   imageFilters: {
     exposure: 0,
     contrast: 0,
@@ -21,7 +20,8 @@ const initialState = {
     shadows: 0,
     tone: 0,
     noise: 0
-  }
+  },
+  wasm: null
 }
 
 const reducer = (state, action) => {
@@ -40,10 +40,10 @@ const reducer = (state, action) => {
           [action.filterType]: action.newFilterValue
         }
       }
-    case 'changeImageData':
+    case 'changeWasm':
       return {
         ...state,
-        canvasCtx: action.newCanvasCtx
+        canvasCtx: action.newWasm
       }
     default:
       return state

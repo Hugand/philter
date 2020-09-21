@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../../styles/views/home-screen.scss';
 import ImagePicker from '../atoms/image-picker'
 import { useStateValue } from  '../../state'
+import { loadWasm } from '../../helpers/wasm';
 
 function HomeScreen(props) {
   const [ { image }, dispatch ] = useStateValue()
@@ -14,6 +15,20 @@ function HomeScreen(props) {
     })
     props.history.push('/edit')
   }
+
+  useEffect(() => {
+    loadWasm().then(wasm => {
+      dispatch({
+        type: "changeWasm",
+        newWasm: wasm
+      })
+      console.log(wasm)
+      // let arr = [1, 2, 3, 4]
+      // let a = wasm.test(Array(200000).fill(15))
+      // // let a = wasm.test_num(2)
+      // console.log(a, arr)
+    })
+  }, [])
 
   return (
     <main className="home-main">

@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { applyExposure, applyContrast } from '../../helpers/filters';
+import { applyExposure, applyContrast, applyShadowHighlightCorrection } from '../../helpers/filters';
 import { useStateValue } from  '../../state'
+import { loadWasm } from '../../helpers/wasm';
 
 function Canvas(props) {
-    const [ { canvasCtx, imageFilters, image }, dispatch ] = useStateValue()
+    const [ { wasm, imageFilters, image }, dispatch ] = useStateValue()
+    const [ w, setW ] = useState(null)
     const canvasRef = useRef(null)
     const imageObject = new Image()
-    imageObject.src = URL.createObjectURL(image)
+
+    const [imageData, setImageData] = useState()
+    
 
     const [ canvasWidth, setCanvasWidth ] = useState(window.innerWidth)
     const [ canvasHeight, setCanvasHeight ] = useState(window.innerHeight)
@@ -15,32 +19,57 @@ function Canvas(props) {
     const [ ctx, setCtx ] = useState(null)
 
     useEffect(() => {
-        console.log("useEffect canvas")
-        // console.log(props.image)
-        setCanvas(canvasRef.current)
-        if(canvas)
-            setCtx(canvas.getContext('2d'))
+        loadWasm().then(wasm => {
+          dispatch({
+            type: "changeWasm",
+            newWasm: wasm
+          })
+          console.log(wasm)
+          setW(wasm)
+        })
+    }, [])
 
-        if(canvas && ctx)
-            imageObject.onload = () => {
-                const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas, ctx)
+    useEffect(() => {
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+        setCanvas(canvas)
+        setCtx(ctx)
+        imageObject.onload = () => {
+            const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas, ctx)
 
-                setCanvasWidth(newCanvasWidth)
-                setCanvasHeight(newCanvasHeight)
+            setCanvasWidth(newCanvasWidth)
+            setCanvasHeight(newCanvasHeight)
+            ctx.drawImage(imageObject, 1, 1, newCanvasWidth-2, newCanvasHeight-2);
+            setImageData(ctx.getImageData(0, 0, newCanvasWidth, newCanvasHeight))
+        }
+        imageObject.src = URL.createObjectURL(image)
+    }, [])
 
+    useEffect(() => {
+        if(canvas && ctx && imageData) {
+            let img = new ImageData(imageData.data, canvasWidth, canvasHeight)
+            // const  = imageFilters
+            ctx.putImageData(img, 0, 0) 
 
-                applyFilters(ctx, canvasWidth, canvasHeight, imageFilters)
-            }
-    }, [imageObject])
+            apply(img, imageFilters)
+             
+        }
+    }, [imageFilters])
 
-    /*
-        TODO: Try to find a way to fix this ;)
-    */
-    // useEffect(() => {
-    //     if(canvas && ctx && imageObject) {
-            
-    //     }
-    // }, [imageFilters])
+    const apply = async (
+        img,
+        { exposure, contrast, highlights, shadows }
+    ) => {
+        let a = w.apply_filters(
+            img.data,
+            exposure,
+            contrast,
+            highlights,
+            shadows,
+            getArrayRelSize(canvasWidth)
+        )
+        ctx.putImageData(new ImageData(new Uint8ClampedArray(a), canvasWidth, canvasHeight), 0, 0)
+    }
 
     return <canvas
         ref={canvasRef}
@@ -49,17 +78,25 @@ function Canvas(props) {
         {...props} />;
 }
 
+function getArrayRelSize(size) {
+    return (Math.floor(size)-2)*4
+}
+
+
+
 function applyFilters(ctx, canvasWidth, canvasHeight, imageFilters){
     const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
 
-    const { exposure, contrast } = imageFilters
+    const { exposure, contrast, shadows, highlights } = imageFilters
     const contrastFactor = (259*(contrast + 255))/(255*(259 - contrast))
     
     for(let i = 0; i < imageData.data.length; i += 4){
         applyExposure(imageData.data, i, exposure)
         applyContrast(imageData.data, i, contrastFactor)
+        // if(shadows !== 0 || highlights !== 0)
+            applyShadowHighlightCorrection(imageData.data, canvasWidth-2, canvasHeight-2)
     }
-    
+
     ctx.putImageData(imageData, 0, 0) 
 }
 
@@ -73,8 +110,7 @@ function scaleToFit(img, canvas, ctx){
     const canvasWidth = img.width * scale
     const canvasHeight = img.height * scale
 
-    ctx.drawImage(img, x, y, canvasWidth, canvasHeight);
-    return [ canvasWidth, canvasHeight ]
+    return [ canvasWidth+2, canvasHeight+2 ]
 }
 
 export default Canvas;
