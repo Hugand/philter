@@ -22,18 +22,18 @@ function Canvas(props) {
     const [ canvas, setCanvas ] = useState(null)
     const [ ctx, setCtx ] = useState(null)
 
-    useEffect(() => {
+    const [ applyFilterTimeout, setApplyFilterTimeout ] = useState()
 
-
-        loadWasm().then(wasm => {
-          dispatch({
-            type: "changeWasm",
-            newWasm: wasm
-          })
-          console.log(wasm)
-          setW(wasm)
-        })
-    }, [])
+    // useEffect(() => {
+    //     loadWasm().then(wasm => {
+    //       dispatch({
+    //         type: "changeWasm",
+    //         newWasm: wasm
+    //       })
+    //       console.log(wasm)
+    //       setW(wasm)
+    //     })
+    // }, [])
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -60,22 +60,27 @@ function Canvas(props) {
         imageObject.src = URL.createObjectURL(image)
     }, [])
 
+    // Using timeouts here to avoid web worker overload
     useEffect(() => {
-        if(canvas && ctx && imageData) {
-            let img = new ImageData(imageData.data, canvasWidth, canvasHeight)
-            // const  = imageFilters
-            ctx.putImageData(img, 0, 0) 
-            // apply(img, imageFilters)
-            
-            worker.postMessage({
-                img: img.data,
-                imageFilters,
-                canvasWidth,
-            });
-            
-             
-        }
+        clearTimeout(applyFilterTimeout)
+        console.log("Stopped filtering")
+
+        setApplyFilterTimeout(setTimeout(() => {
+            console.log("filtering")
+            if(canvas && ctx && imageData) {
+                let img = new ImageData(imageData.data, canvasWidth, canvasHeight)
+                // ctx.putImageData(img, 0, 0) 
+                
+                worker.postMessage({
+                    img: img.data,
+                    imageFilters,
+                    canvasWidth,
+                });
+            }
+        }, 500))
     }, [imageFilters])
+
+
 
     const apply = async (
         img,

@@ -27,15 +27,6 @@ wasmPhilter("./wasm/wasm_philter_bg.wasm")
   };
 })
 
-const apply = (
-  img,
-  { exposure, contrast, highlights, shadows },
-  wasm,
-  canvasWidth,
-) => {
-  
-}
-
 async function loadWasm(){
   try {
       return await import("external-wasm-philter");
