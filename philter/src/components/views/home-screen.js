@@ -6,7 +6,6 @@ import { loadWasm } from '../../helpers/wasm';
 
 function HomeScreen(props) {
   const [ { image }, dispatch ] = useStateValue()
-
   const handlePhotoSelection = (img) => {
     dispatch({
       type: 'changeImage',
@@ -17,6 +16,8 @@ function HomeScreen(props) {
   }
 
   useEffect(() => {
+
+
     loadWasm().then(wasm => {
       dispatch({
         type: "changeWasm",
@@ -33,7 +34,9 @@ function HomeScreen(props) {
   return (
     <main className="home-main">
         <header>
-            <h1 className="main-title">Philter</h1>
+            <h1 className="main-title" onClick={() => {
+
+            }}>Philter</h1>
             <h5 className="about">About</h5>
         </header>
 

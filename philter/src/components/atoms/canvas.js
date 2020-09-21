@@ -9,6 +9,10 @@ function Canvas(props) {
     const canvasRef = useRef(null)
     const imageObject = new Image()
 
+    const [ worker, setWorker ] = useState()
+  
+    const [ isWorkerRunning, setIsWorkerRunning ] = useState(false)
+
     const [imageData, setImageData] = useState()
     
 
@@ -19,6 +23,8 @@ function Canvas(props) {
     const [ ctx, setCtx ] = useState(null)
 
     useEffect(() => {
+
+
         loadWasm().then(wasm => {
           dispatch({
             type: "changeWasm",
@@ -37,10 +43,19 @@ function Canvas(props) {
         imageObject.onload = () => {
             const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas, ctx)
 
+            const workerBuf = new Worker('./workers/worker.js')
+
             setCanvasWidth(newCanvasWidth)
             setCanvasHeight(newCanvasHeight)
             ctx.drawImage(imageObject, 1, 1, newCanvasWidth-2, newCanvasHeight-2);
             setImageData(ctx.getImageData(0, 0, newCanvasWidth, newCanvasHeight))
+
+            workerBuf.onmessage = e => {
+                if(e.data.filtered)
+                    ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), newCanvasWidth, newCanvasHeight), 0, 0)
+            };
+            setWorker(workerBuf)
+
         }
         imageObject.src = URL.createObjectURL(image)
     }, [])
@@ -50,8 +65,14 @@ function Canvas(props) {
             let img = new ImageData(imageData.data, canvasWidth, canvasHeight)
             // const  = imageFilters
             ctx.putImageData(img, 0, 0) 
-
-            apply(img, imageFilters)
+            // apply(img, imageFilters)
+            
+            worker.postMessage({
+                img: img.data,
+                imageFilters,
+                canvasWidth,
+            });
+            
              
         }
     }, [imageFilters])
