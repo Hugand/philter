@@ -3,6 +3,7 @@ mod utils;
 extern crate wasm_bindgen;
 
 use wasm_bindgen::prelude::*;
+use num_traits::pow;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -53,7 +54,7 @@ pub fn test_num(n: &mut Vec<i32>, i: usize) {
 #[wasm_bindgen]
 pub fn apply_filters(
     mut elements: Vec<u8>,
-    exposure: i16,
+    exposure: f32,
     contrast: f32,
     highlights: f32,
     shadows: f32,
@@ -63,8 +64,8 @@ pub fn apply_filters(
     let step = 4;
     
     let contrast_factor: f32 = (259.0*(contrast + 255.0))/(255.0*(259.0 - contrast));
-    let highlight_factor: f32 = (259.0*((-1.0 * highlights) + 255.0))/(255.0*(259.0 - (-1.0 * highlights)));
-    let shadow_factor: f32 = (259.0*((-1.0 * shadows) + 255.0))/(255.0*(259.0 - (-1.0 * shadows)));
+    let highlight_factor: f32 = (259.0*((1.0 * highlights) + 255.0))/(255.0*(259.0 - (1.0 * highlights)));
+    let shadow_factor: f32 = (259.0*((1.0 * shadows) + 255.0))/(255.0*(259.0 - (1.0 * shadows)));
 
     let initial_img_pos = canvas_width+(step*3);
     let final_img_pos = elements.len() as i32 - canvas_width - (step*3);
@@ -83,8 +84,8 @@ pub fn apply_filters(
                 canvas_width,
                 highlight_factor,
                 shadow_factor,
-                highlights as i16,
-                shadows as i16
+                highlights,
+                shadows
             );
         }
 
@@ -100,10 +101,10 @@ pub fn apply_filters(
     return elements;
 }
 
-pub fn apply_exposure(pixel: &mut Vec<u8>, pos: usize, exposure: i16) {
-    pixel[pos] = clamp(0, 255, pixel[pos] as i16 + exposure);
-    pixel[pos+1] = clamp(0, 255, pixel[pos+1] as i16 + exposure);
-    pixel[pos+2] = clamp(0, 255, pixel[pos+2] as i16 + exposure);
+pub fn apply_exposure(pixel: &mut Vec<u8>, pos: usize, exposure: f32) {
+    pixel[pos] = clamp(0, 255, (pixel[pos] as f32 * (exposure + 1.0)) as i16);
+    pixel[pos+1] = clamp(0, 255, (pixel[pos+1] as f32 * (exposure + 1.0)) as i16);
+    pixel[pos+2] = clamp(0, 255, (pixel[pos+2] as f32 * (exposure + 1.0)) as i16);
 }
 
 pub fn apply_contrast(pixel: &mut Vec<u8>, pos: usize, factor: f32){
@@ -128,26 +129,28 @@ pub fn apply_shadow_high_correction(
     canvas_width: i32,
     highlight_factor: f32,
     shadow_factor: f32,
-    highlights: i16,
-    shadows: i16,
+    highlights: f32,
+    shadows: f32,
 ){
-    let SHADOW_THRESHOLD = 45;
-    let HIGHLIGHT_THRESHOLD = 75;
-    let mean: i16 = calculate_statistics(pixel, pos, canvas_width);
+    let SHADOW_THRESHOLD = 50;
+    let HIGHLIGHT_THRESHOLD = 50;
+    let stats: [i16; 2] = calculate_statistics(pixel, pos, canvas_width);
+    let mean = stats[0];
+    let variance = stats[1];
+    let v: f32 = get_rgb_to_hsv_value(&mut pixel, pos as usize) as f32;
 
-    let is_shadow = mean < SHADOW_THRESHOLD;
-    let is_highlight = mean > HIGHLIGHT_THRESHOLD;
+    let is_shadow = v <= SHADOW_THRESHOLD as f32;
+    let is_highlight = v >= HIGHLIGHT_THRESHOLD as f32;
 
-    if is_highlight && highlight_factor != 1.0 {
-        apply_contrast(&mut pixel, pos, highlight_factor);
-        // apply_exposure(&mut pixel, pos, -1 * highlights)
-    } else if is_shadow && shadow_factor != 1.0 {
-        apply_contrast(&mut pixel, pos, shadow_factor);
-        // apply_exposure(&mut pixel, pos, -1 * shadows)
-    }
+    let mut exposure: f32 = calculate_shadow_exposure(v, shadows);
+    
+    // Enhance shadows
+    apply_exposure(&mut pixel, pos, exposure);
+
+    // apply_contrast(&mut pixel, pos, (259.0*((1.0 * exposure * 20.0) + 255.0))/(255.0*(259.0 - (1.0 * exposure * 20.0))));
 }
 
-pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> i16 {
+pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [i16; 2] {
     let init_index: i32 = pos as i32 - canvas_width - 4;
     let final_index: i32 = pos as i32 + canvas_width + 4;
     let value_list: [u8; 9] = [
@@ -162,7 +165,7 @@ pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i
         get_rgb_to_hsv_value(&mut pixel, final_index as usize),
     ];
     let mut mean: i16 = 0;
-    // let mut variance: i16 = 0;
+    let mut variance: i16 = 0;
 
     for val in value_list.iter() {
         mean += *val as i16;
@@ -170,21 +173,37 @@ pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i
 
     mean /= 9;
 
-    // for val in value_list.iter() {
-    //     variance += (mean - (*val as i16)) * (mean - (*val as i16));
-    // }
+    for val in value_list.iter() {
+        variance += (mean - (*val as i16)) * (mean - (*val as i16));
+    }
 
-    // variance /= 9;
+    variance /= 9;
     
-    return mean;
+    return [ mean, variance ];
+}
+
+// TODO: Tweak the exposure calculation in the interval [35; 50[
+pub fn calculate_shadow_exposure(v: f32, shadows: f32) -> f32 {
+    if v >= 0.0 && v < 11.0 {
+        return (50.0) / 120.0 * shadows;
+    } else if v >= 11.0 && v < 35.0 {
+        return (- pow(0.2 * v - 2.0, 2) as f32 + 50.0) / 120.0 * shadows;
+    } else if v >= 35.0 && v < 50.0 {
+        return (pow(2, (15.2 - v * 0.3) as usize) as f32 - 1.15) / 120.0 * shadows;
+    } else {
+        return 0.0;
+    }
 }
 
 pub fn get_rgb_to_hsv_value(pixel: &mut Vec<u8>, pos: usize) -> u8 {
-    if pixel[pos] > pixel[pos+1] &&  pixel[pos] > pixel[pos+2] {
+    if pixel[pos] > pixel[pos+1] && pixel[pos] > pixel[pos+2]
+    || (pixel[pos] == pixel[pos+1]) && pixel[pos] > pixel[pos+2]
+    || (pixel[pos] == pixel[pos+2]) && pixel[pos] > pixel[pos+1] {
         return (100.0 * (pixel[pos] as f32 / 255.0)) as u8;
-    } else if pixel[pos+1] > pixel[pos] &&  pixel[pos+1] > pixel[pos+2] {
+    } else if pixel[pos+1] > pixel[pos] &&  pixel[pos+1] > pixel[pos+2]
+    || (pixel[pos+1] == pixel[pos+2]) && pixel[pos+1] > pixel[pos] {
         return (100.0 * (pixel[pos+1] as f32 / 255.0)) as u8;
-    } else {
+    } else if pixel[pos+2] > pixel[pos] && pixel[pos+2] > pixel[pos+1] {
         return (100.0 * (pixel[pos+2] as f32 / 255.0)) as u8;
-    }
+    } else { return 0; }
 }

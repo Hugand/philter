@@ -1,13 +1,14 @@
 import React from 'react'
 import Slider from 'react-input-slider';
 
-function SliderComponent({ label, value, setValue }) {
+function SliderComponent({ label, value, setValue, min, max, step }) {
     return (
         <div className="slider-container">
             <label className="slider-label">{ label } - { value }</label>
             <Slider
                 x={ value }
-                xmin={-100}
+                xmin={min}
+                xmax={max}
                 onChange={ setValue }
                 styles={{
                     track: {

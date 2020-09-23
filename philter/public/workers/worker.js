@@ -4,23 +4,23 @@ delete WebAssembly.instantiateStreaming;
 wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
 .then(wasm => {
   const { apply_filters } = wasmPhilter
-  // postMessage("BACK TO YOU BITCH!");
+
   onmessage = async e => {
     const { img, imageFilters, canvasWidth } = e.data;
-    
     const { exposure, contrast, highlights, shadows } = imageFilters
-
+console.log(exposure/10)
     // apply(img, imageFilters, wasm, canvasWidth)
     const arrayRelWidth = (Math.floor(canvasWidth)-2)*4
     let filtered = apply_filters(
         img,
-        exposure,
+        exposure / 10,
         contrast,
         highlights,
-        shadows,
+        shadows / 10,
         arrayRelWidth
     )
     postMessage({
+      exp: exposure,
       filtered
     });
   };

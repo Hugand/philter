@@ -38,8 +38,9 @@ function Canvas(props) {
         const workerBuf = new Worker('./workers/worker.js')
 
         workerBuf.onmessage = e => {
-            if(e.data.filtered)
-                ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), canvasWidth, canvasHeight), 0, 0)
+            // if(e.data.filtered)
+            ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), canvasWidth, canvasHeight), 0, 0)
+            console.log("FILTERED", e.data.exp)
         };
         setWorker(workerBuf)
     }

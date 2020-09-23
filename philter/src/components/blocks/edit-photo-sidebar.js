@@ -11,6 +11,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Exposure"
+        min={-50}
+        max={50}
         value={imageFilters.exposure}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -20,6 +22,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Contrast"
+        min={-100}
+        max={100}
         value={imageFilters.contrast}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -29,6 +33,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Highlights"
+        min={-100}
+        max={100}
         value={imageFilters.highlights}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -38,6 +44,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Shadows"
+        min={-10}
+        max={10}
         value={imageFilters.shadows}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -47,6 +55,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Hue"
+        min={-100}
+        max={100}
         value={imageFilters.hue}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -56,6 +66,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Saturation"
+        min={-100}
+        max={100}
         value={imageFilters.saturation}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -65,6 +77,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Tone"
+        min={-100}
+        max={100}
         value={imageFilters.tone}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -74,6 +88,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Sharpness"
+        min={-100}
+        max={100}
         value={imageFilters.sharpness}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
@@ -83,6 +99,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Noise"
+        min={-100}
+        max={100}
         value={imageFilters.noise}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
