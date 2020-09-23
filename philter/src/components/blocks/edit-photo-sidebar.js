@@ -33,8 +33,8 @@ function EditPhotoSidebar(props) {
 
       <SliderComponent
         label="Highlights"
-        min={-100}
-        max={100}
+        min={-10}
+        max={10}
         value={imageFilters.highlights}
         setValue={({x}) => dispatch({
           type: 'changeFilter',

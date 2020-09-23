@@ -2,6 +2,7 @@ mod utils;
 
 extern crate wasm_bindgen;
 
+use crate::utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 use num_traits::pow;
 
@@ -60,6 +61,8 @@ pub fn apply_filters(
     shadows: f32,
     canvas_width: i32
 ) -> Vec<u8> {
+    set_panic_hook();
+
     let mut i;
     let step = 4;
     
@@ -82,8 +85,6 @@ pub fn apply_filters(
                 &mut elements,
                 i as usize,
                 canvas_width,
-                highlight_factor,
-                shadow_factor,
                 highlights,
                 shadows
             );
@@ -127,25 +128,26 @@ pub fn apply_shadow_high_correction(
     mut pixel: &mut Vec<u8>,
     pos: usize,
     canvas_width: i32,
-    highlight_factor: f32,
-    shadow_factor: f32,
     highlights: f32,
     shadows: f32,
 ){
-    let SHADOW_THRESHOLD = 50;
-    let HIGHLIGHT_THRESHOLD = 50;
     let stats: [f32; 2] = calculate_statistics(pixel, pos, canvas_width);
     let mean = stats[0];
-    let variance = stats[1];
-    let v: f32 = get_rgb_to_hsv_value(&mut pixel, pos as usize) as f32;
+    // let variance = stats[1];
+    // let v: f32 = get_rgb_to_hsv_value(&mut pixel, pos as usize) as f32;
 
-    let is_shadow = v <= SHADOW_THRESHOLD as f32;
-    let is_highlight = v >= HIGHLIGHT_THRESHOLD as f32;
-
-    let mut exposure: f32 = calculate_shadow_exposure(mean, shadows);
+    let shadow_exposure: f32 = calculate_shadow_exposure(mean, shadows);
+    let highlight_exposure: f32 = calculate_highlight_exposure(mean, highlights);
     
-    // Enhance shadows
-    apply_exposure(&mut pixel, pos, exposure);
+    // Adjust shadows
+    if shadows != 0.0{
+        apply_exposure(&mut pixel, pos, shadow_exposure);
+    }
+
+    // Adjust highlights
+    if highlights != 0.0 {
+        apply_exposure(&mut pixel, pos, highlight_exposure);
+    }
 }
 
 pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [f32; 2] {
@@ -182,13 +184,25 @@ pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i
 
 pub fn calculate_shadow_exposure(v: f32, shadows: f32) -> f32 {
     if v >= 0.0 && v < 20.0 {
-        return (50.0) / 50.0 * shadows;
+        return shadows;
     } else if v >= 20.0 && v < 34.0 {
         return (- pow(0.2 * v - 2.0, 2) as f32 + 50.0) / 50.0 * shadows;
     } else if v >= 34.0 && v < 71.0 {
-        return (0.03 * pow(v - 71.0, 2) as f32) / 50.0 * shadows;
+        return (0.0307 * pow(v - 71.0, 2) as f32) / 50.0 * shadows;
     } else {
         return 0.0;
+    }
+}
+
+pub fn calculate_highlight_exposure(v: f32, highlights: f32) -> f32 {
+    if v >= 0.0 && v < 29.0 {
+        return 0.0;
+    } else if v >= 29.0 && v < 66.0 {
+        return (0.0307 * pow(v - 29.0, 2) as f32) / 50.0 * highlights;
+    } else if v >= 66.0 && v < 88.0 {
+        return (- pow(0.2 * v - 16.0, 2) as f32 + 50.0) / 50.0 * highlights;
+    } else {
+        return highlights;
     }
 }
 

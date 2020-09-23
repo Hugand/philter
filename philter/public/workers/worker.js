@@ -15,7 +15,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
         img,
         exposure / 10,
         contrast,
-        highlights,
+        highlights / 20,
         shadows / 10,
         arrayRelWidth
     )
