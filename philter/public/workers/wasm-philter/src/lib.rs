@@ -134,7 +134,7 @@ pub fn apply_shadow_high_correction(
 ){
     let SHADOW_THRESHOLD = 50;
     let HIGHLIGHT_THRESHOLD = 50;
-    let stats: [i16; 2] = calculate_statistics(pixel, pos, canvas_width);
+    let stats: [f32; 2] = calculate_statistics(pixel, pos, canvas_width);
     let mean = stats[0];
     let variance = stats[1];
     let v: f32 = get_rgb_to_hsv_value(&mut pixel, pos as usize) as f32;
@@ -142,15 +142,13 @@ pub fn apply_shadow_high_correction(
     let is_shadow = v <= SHADOW_THRESHOLD as f32;
     let is_highlight = v >= HIGHLIGHT_THRESHOLD as f32;
 
-    let mut exposure: f32 = calculate_shadow_exposure(v, shadows);
+    let mut exposure: f32 = calculate_shadow_exposure(mean, shadows);
     
     // Enhance shadows
     apply_exposure(&mut pixel, pos, exposure);
-
-    // apply_contrast(&mut pixel, pos, (259.0*((1.0 * exposure * 20.0) + 255.0))/(255.0*(259.0 - (1.0 * exposure * 20.0))));
 }
 
-pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [i16; 2] {
+pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [f32; 2] {
     let init_index: i32 = pos as i32 - canvas_width - 4;
     let final_index: i32 = pos as i32 + canvas_width + 4;
     let value_list: [u8; 9] = [
@@ -164,32 +162,31 @@ pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i
         get_rgb_to_hsv_value(&mut pixel, (pos as i32 + canvas_width) as usize),
         get_rgb_to_hsv_value(&mut pixel, final_index as usize),
     ];
-    let mut mean: i16 = 0;
-    let mut variance: i16 = 0;
+    let mut mean: f32 = 0.0;
+    let mut variance: f32 = 0.0;
 
     for val in value_list.iter() {
-        mean += *val as i16;
+        mean += *val as f32;
     }
 
-    mean /= 9;
+    mean /= 9.0;
 
     for val in value_list.iter() {
-        variance += (mean - (*val as i16)) * (mean - (*val as i16));
+        variance += (mean - (*val as f32)) * (mean - (*val as f32));
     }
 
-    variance /= 9;
+    variance /= 9.0;
     
     return [ mean, variance ];
 }
 
-// TODO: Tweak the exposure calculation in the interval [35; 50[
 pub fn calculate_shadow_exposure(v: f32, shadows: f32) -> f32 {
-    if v >= 0.0 && v < 11.0 {
-        return (50.0) / 120.0 * shadows;
-    } else if v >= 11.0 && v < 35.0 {
-        return (- pow(0.2 * v - 2.0, 2) as f32 + 50.0) / 120.0 * shadows;
-    } else if v >= 35.0 && v < 50.0 {
-        return (pow(2, (15.2 - v * 0.3) as usize) as f32 - 1.15) / 120.0 * shadows;
+    if v >= 0.0 && v < 20.0 {
+        return (50.0) / 50.0 * shadows;
+    } else if v >= 20.0 && v < 34.0 {
+        return (- pow(0.2 * v - 2.0, 2) as f32 + 50.0) / 50.0 * shadows;
+    } else if v >= 34.0 && v < 71.0 {
+        return (0.03 * pow(v - 71.0, 2) as f32) / 50.0 * shadows;
     } else {
         return 0.0;
     }

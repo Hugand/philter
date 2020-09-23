@@ -8,7 +8,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
   onmessage = async e => {
     const { img, imageFilters, canvasWidth } = e.data;
     const { exposure, contrast, highlights, shadows } = imageFilters
-console.log(exposure/10)
+    console.log(exposure/10)
     // apply(img, imageFilters, wasm, canvasWidth)
     const arrayRelWidth = (Math.floor(canvasWidth)-2)*4
     let filtered = apply_filters(
@@ -26,7 +26,7 @@ console.log(exposure/10)
   };
 })
 
-async function loadWasm(){
+async function loadWasm() {
   try {
       return await import("external-wasm-philter");
   } catch (err) {
