@@ -1,0 +1,38 @@
+
+body {
+    background-color: black;
+    color: white;
+
+    .home-main {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+
+        header {
+            display: flex;
+            flex-direction: row;
+
+            .main-title {
+                display: inline-block;
+                font-size: 6.25rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                margin: 1rem;
+                margin-left: 2rem;
+            }
+            
+            .about {
+                font-weight: 200;
+                margin: auto;
+                margin-right: 6rem;
+                margin-left: auto;
+            }
+        }
+
+        .image-picker {
+            margin: auto;
+        }
+
+    }
+}
