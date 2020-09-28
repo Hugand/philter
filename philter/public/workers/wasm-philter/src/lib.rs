@@ -59,6 +59,7 @@ pub fn apply_filters(
     contrast: f32,
     highlights: f32,
     shadows: f32,
+    hue: i16,
     saturation: i16,
     canvas_width: i32
 ) -> Vec<u8> {
@@ -90,7 +91,7 @@ pub fn apply_filters(
                 shadows
             );
         }
-        apply_saturation_adjustment(&mut elements, i as usize, saturation);
+        apply_hsv_adjustments(&mut elements, i as usize, hue, saturation);
 
         if i == final_row_pos {
             initial_row_pos = i + step*3;
@@ -105,15 +106,15 @@ pub fn apply_filters(
 }
 
 pub fn apply_exposure(pixel: &mut Vec<u8>, pos: usize, exposure: f32) {
-    pixel[pos] = clamp(0, 255, (pixel[pos] as f32 * (exposure + 1.0)) as i16);
-    pixel[pos+1] = clamp(0, 255, (pixel[pos+1] as f32 * (exposure + 1.0)) as i16);
-    pixel[pos+2] = clamp(0, 255, (pixel[pos+2] as f32 * (exposure + 1.0)) as i16);
+    pixel[pos] = clamp(0, 255, (pixel[pos] as f32 * (exposure + 1.0)) as i16) as u8;
+    pixel[pos+1] = clamp(0, 255, (pixel[pos+1] as f32 * (exposure + 1.0)) as i16) as u8;
+    pixel[pos+2] = clamp(0, 255, (pixel[pos+2] as f32 * (exposure + 1.0)) as i16) as u8;
 }
 
 pub fn apply_contrast(pixel: &mut Vec<u8>, pos: usize, factor: f32){
-    pixel[pos] = clamp(0, 255, (factor * (pixel[pos] as f32 - 128.0) + 128.0).round() as i16);
-    pixel[pos+1] = clamp(0, 255, (factor * (pixel[pos+1] as f32 - 128.0) + 128.0).round() as i16);
-    pixel[pos+2] = clamp(0, 255, (factor * (pixel[pos+2] as f32 - 128.0) + 128.0).round() as i16);
+    pixel[pos] = clamp(0, 255, (factor * (pixel[pos] as f32 - 128.0) + 128.0).round() as i16) as u8;
+    pixel[pos+1] = clamp(0, 255, (factor * (pixel[pos+1] as f32 - 128.0) + 128.0).round() as i16) as u8;
+    pixel[pos+2] = clamp(0, 255, (factor * (pixel[pos+2] as f32 - 128.0) + 128.0).round() as i16) as u8;
 }
 pub fn apply_shadow_high_correction(
     mut pixel: &mut Vec<u8>,
@@ -141,16 +142,18 @@ pub fn apply_shadow_high_correction(
     }
 }
 
-pub fn apply_saturation_adjustment(pixel: &mut Vec<u8>, pos: usize, saturation: i16) {
+pub fn apply_hsv_adjustments(pixel: &mut Vec<u8>, pos: usize, hue: i16, saturation: i16) {
     let mut hsv: [i16; 3] = rgb_to_hsv(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
 
-    hsv[1] += saturation;
+    hsv[0] = clamp(0, 360, hsv[0] + hue) as i16;
+    // hsv[0] *= hue;
+    hsv[1] = clamp(0, 100, hsv[1] + saturation) as i16;
 
     let rgb = hsv_to_rgb(hsv[0], hsv[1] as f32 * 0.01, hsv[2] as f32 * 0.01);
 
-    pixel[pos] = clamp(0, 255, rgb[0] as i16);
-    pixel[pos+1] = clamp(0, 255, rgb[1] as i16);
-    pixel[pos+2] = clamp(0, 255, rgb[2] as i16);
+    pixel[pos] = clamp(0, 255, rgb[0] as i16) as u8;
+    pixel[pos+1] = clamp(0, 255, rgb[1] as i16) as u8;
+    pixel[pos+2] = clamp(0, 255, rgb[2] as i16) as u8;
 }
 
 pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [f32; 2] {
@@ -295,12 +298,12 @@ pub fn calculate_c_min(r: f32, g: f32, b: f32) -> f32 {
     else { return 0.0; }
 }
 
-pub fn clamp(min: u8, max: u8, val: i16) -> u8 {
-    if val < min as i16 {
+pub fn clamp(min: i16, max: i16, val: i16) -> i16 {
+    if val < min{
         return min;
-    } else if val > max as i16 {
+    } else if val > max{
         return max;
     } else {
-        return val as u8;
+        return val;
     }
 }

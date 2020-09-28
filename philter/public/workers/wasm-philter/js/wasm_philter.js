@@ -109,17 +109,18 @@ function getArrayU8FromWasm0(ptr, len) {
 * @param {number} contrast
 * @param {number} highlights
 * @param {number} shadows
+* @param {number} hue
 * @param {number} saturation
 * @param {number} canvas_width
 * @returns {Uint8Array}
 */
-__exports.apply_filters = function(elements, exposure, contrast, highlights, shadows, saturation, canvas_width) {
+__exports.apply_filters = function(elements, exposure, contrast, highlights, shadows, hue, saturation, canvas_width) {
     try {
         const retptr = wasm.__wbindgen_export_0.value - 16;
         wasm.__wbindgen_export_0.value = retptr;
         var ptr0 = passArray8ToWasm0(elements, wasm.__wbindgen_malloc);
         var len0 = WASM_VECTOR_LEN;
-        wasm.apply_filters(retptr, ptr0, len0, exposure, contrast, highlights, shadows, saturation, canvas_width);
+        wasm.apply_filters(retptr, ptr0, len0, exposure, contrast, highlights, shadows, hue, saturation, canvas_width);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var v1 = getArrayU8FromWasm0(r0, r1).slice();
