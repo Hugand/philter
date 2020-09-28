@@ -94,8 +94,6 @@ pub fn apply_filters(
     let step = 4;
     
     let contrast_factor: f32 = (259.0*(contrast + 255.0))/(255.0*(259.0 - contrast));
-    let highlight_factor: f32 = (259.0*((1.0 * highlights) + 255.0))/(255.0*(259.0 - (1.0 * highlights)));
-    let shadow_factor: f32 = (259.0*((1.0 * shadows) + 255.0))/(255.0*(259.0 - (1.0 * shadows)));
 
     let initial_img_pos = canvas_width+(step*3);
     let final_img_pos = elements.len() as i32 - canvas_width - (step*3);
@@ -105,9 +103,15 @@ pub fn apply_filters(
     i = initial_img_pos;
     
     while i <= final_img_pos as i32 {
-        apply_exposure(&mut elements, i as usize, exposure);
-        apply_contrast(&mut elements, i as usize, contrast_factor);
-        if highlight_factor != 1.0 || shadow_factor != 1.0 {
+        if exposure != 0.0 {
+            apply_exposure(&mut elements, i as usize, exposure);
+        }
+        
+        if contrast != 0.0 {
+            apply_contrast(&mut elements, i as usize, contrast_factor);
+        }
+
+        if highlights != 0.0 || shadows != 0.0 {
             apply_shadow_high_correction(
                 &mut elements,
                 i as usize,
@@ -116,7 +120,10 @@ pub fn apply_filters(
                 shadows
             );
         }
-        apply_hsv_adjustments(&mut elements, i as usize, hue, saturation);
+
+        if hue != 0 || saturation != 0 {
+            apply_hsv_adjustments(&mut elements, i as usize, hue, saturation);
+        }
 
         if i == final_row_pos {
             initial_row_pos = i + step*3;

@@ -32,43 +32,41 @@ function HistogramComponent() {
                 meanHistogram[i] += pixel / 3
             })
 
-            const step = {
-                x: canvas.width / 255,
-                y: canvas.height / maxHeightPixelValue
-            }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-            paintColorGraphLine(histogramData.r, '#eb4034', maxHeightPixelValue, step)
-            paintColorGraphLine(histogramData.g, '#3cc94d', maxHeightPixelValue, step)
-            paintColorGraphLine(histogramData.b, '#3598e8', maxHeightPixelValue, step)
-            paintColorGraphLine(meanHistogram, '#ffffff', maxHeightPixelValue, step)
+            paintColorGraphLine(histogramData.r, '#eb4034', maxHeightPixelValue)
+            paintColorGraphLine(histogramData.g, '#3cc94d', maxHeightPixelValue)
+            paintColorGraphLine(histogramData.b, '#3598e8', maxHeightPixelValue)
+            paintColorGraphLine(meanHistogram, '#ffffff', maxHeightPixelValue)
 
         }
     }, [histogramData])
 
-    const paintColorGraphLine = (colorData, graphColor, maxHeightPixelValue, step) => {
+    const paintColorGraphLine = (colorData, graphColor, maxHeightPixelValue) => {
         const canvas = canvasRef.current
         const prevPixelPos = {
             x: 0,
             y: maxHeightPixelValue
+        }
+        const step = {
+            x: canvas.width / 255,
+            y: canvas.height / maxHeightPixelValue
         }
         ctx.beginPath()
 
         // ctx.lineWidth = 0.5;
         ctx.strokeStyle = graphColor;
         colorData.forEach((pixel, i) => {
-            // if( i % 3 === 0){
+            if( i % 3 === 0){
                 ctx.moveTo(prevPixelPos.x, prevPixelPos.y)
                 ctx.lineTo(step.x * i, canvas.height - step.y * pixel)
                 
                 prevPixelPos.x = step.x * i
                 prevPixelPos.y = canvas.height - step.y * pixel
-            // }
+            }
         })
-        console.log(canvas.height, canvas.height - step.y * 100, maxHeightPixelValue)
         ctx.stroke();
-
     }
 
     return (
