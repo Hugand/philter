@@ -59,6 +59,7 @@ pub fn apply_filters(
     contrast: f32,
     highlights: f32,
     shadows: f32,
+    saturation: i16,
     canvas_width: i32
 ) -> Vec<u8> {
     set_panic_hook();
@@ -89,6 +90,7 @@ pub fn apply_filters(
                 shadows
             );
         }
+        apply_saturation_adjustment(&mut elements, i as usize, saturation);
 
         if i == final_row_pos {
             initial_row_pos = i + step*3;
@@ -139,8 +141,16 @@ pub fn apply_shadow_high_correction(
     }
 }
 
-pub fn apply_saturation_adjustment() {
+pub fn apply_saturation_adjustment(pixel: &mut Vec<u8>, pos: usize, saturation: i16) {
+    let mut hsv: [i16; 3] = rgb_to_hsv(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
 
+    hsv[1] += saturation;
+
+    let rgb = hsv_to_rgb(hsv[0], hsv[1] as f32 * 0.01, hsv[2] as f32 * 0.01);
+
+    pixel[pos] = clamp(0, 255, rgb[0] as i16);
+    pixel[pos+1] = clamp(0, 255, rgb[1] as i16);
+    pixel[pos+2] = clamp(0, 255, rgb[2] as i16);
 }
 
 pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [f32; 2] {
@@ -200,58 +210,85 @@ pub fn calculate_highlight_exposure(v: f32, highlights: f32) -> f32 {
 }
 
 
-pub fn rgb_to_hsv(r: f32, g: f32, b: f32) -> [u8; 3] {
+pub fn rgb_to_hsv(r: f32, g: f32, b: f32) -> [i16; 3] {
     let _r: f32 = r / 255.0;
     let _g: f32 = g / 255.0;
     let _b: f32 = b / 255.0;
-    let cMax = calculate_cMax(_r, _g, _b);
-    let cMin = calculate_cMin(_r, _g, _b);
-    let delta = cMax - cMin;
+    let c_max: f32 = calculate_c_max(_r, _g, _b);
+    let c_min: f32 = calculate_c_min(_r, _g, _b);
+    let delta = c_max - c_min;
     
-    let h = calculate_h(_r, _g, _b, delta, cMax);
-    let s = calculate_s(delta, cMax);
-    let v = cMax as u8;
-
-    return [h, s, v];
+    let h = calculate_h(_r, _g, _b, delta, c_max);
+    let s = calculate_s(delta, c_max);
+    let v = (100.0 * c_max) as u8;
+    
+    return [h, s as i16, v as i16];
 }
 
-pub fn calculate_h(r: f32, g: f32, b: f32, delta: f32, cMax: f32) -> u8 {
+pub fn hsv_to_rgb(h: i16, s: f32, v: f32) -> [u8; 3] {
+    let c = v * s;
+    let x = c as f32 * ( 1.0 - ((h as f32 / 60.0) % 2.0 - 1.0).abs());
+    let m = v - c;
+    let mut buff: [f32; 3] = [0.0, 0.0, 0.0];
+    if h >= 0 && h < 60 {
+        buff = [c, x, 0.0];
+    } else if h >= 60 && h < 120 {
+        buff = [x, c, 0.0];
+    } else if h >= 120 && h < 180 {
+        buff = [0.0, c, x];
+    } else if h >= 180 && h < 240 {
+        buff = [0.0, x, c];
+    } else if h >= 240 && h < 300 {
+        buff = [x, 0.0, c];
+    } else if h >= 300 && h < 360 {
+        buff = [c, 0.0, x];
+    }
+
+    return [
+        ((buff[0] + m) * 255.0) as u8,
+        ((buff[1] + m) * 255.0) as u8,
+        ((buff[2] + m) * 255.0) as u8
+    ];
+
+}
+
+pub fn calculate_h(r: f32, g: f32, b: f32, delta: f32, c_max: f32) -> i16 {
     if delta == 0.0 {
         return 0;
-    } else if cMax == r {
-        return (60.0 * ( (g - b) as f32 / delta % 6.0) ) as u8;
-    } else if cMax == g {
-        return (60.0 * ( (b - r) / delta + 2.0) ) as u8;
-    } else if cMax == b {
-        return (60.0 * ( (r - g) / delta + 4.0) ) as u8;
+    } else if c_max == r {
+        return (60.0 * ( ((g - b) as f32 / delta) % 6.0) ) as i16;
+    } else if c_max == g {
+        return (60.0 * ( ((b - r) / delta) + 2.0) ) as i16;
+    } else if c_max == b {
+        return (60.0 * ( ((r - g) / delta) + 4.0) ) as i16;
     } else { return 0; }
 }
 
-pub fn calculate_s(delta: f32, cMax: f32) -> u8 {
-    if cMax == 0.0 { return 0; }
-    else { return (delta / cMax) as u8; }
+pub fn calculate_s(delta: f32, c_max: f32) -> u8 {
+    if c_max == 0.0 { return 0; }
+    else { return (100.0 * delta / c_max) as u8; }
 }
 
 pub fn calculate_v(pixel: &mut Vec<u8>, pos: usize) -> u8 {
-    let cMax = calculate_cMax(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
+    let c_max = calculate_c_max(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
 
-    if cMax == pixel[pos] as f32 {
+    if c_max == pixel[pos] as f32 {
         return (100.0 * (pixel[pos] as f32 / 255.0)) as u8;
-    } else if cMax == pixel[pos+1] as f32 {
+    } else if c_max == pixel[pos+1] as f32 {
         return (100.0 * (pixel[pos+1] as f32 / 255.0)) as u8;
-    } else if cMax == pixel[pos+2] as f32 {
+    } else if c_max == pixel[pos+2] as f32 {
         return (100.0 * (pixel[pos+2] as f32 / 255.0)) as u8;
     } else { return 0; }
 }
 
-pub fn calculate_cMax(r: f32, g: f32, b: f32) -> f32 {
+pub fn calculate_c_max(r: f32, g: f32, b: f32) -> f32 {
     if r >= g && r >= b { return r; }
     else if g >= b && g >= r { return g; }
     else if b >= r && b >= g { return b; }
     else { return 0.0; }
 }
 
-pub fn calculate_cMin(r: f32, g: f32, b: f32) -> f32 {
+pub fn calculate_c_min(r: f32, g: f32, b: f32) -> f32 {
     if r <= g && r <= b { return r; }
     else if g <= b && g <= r { return g; }
     else if b <= r && b <= g { return b; }

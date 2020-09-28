@@ -7,7 +7,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
 
   onmessage = async e => {
     const { img, imageFilters, canvasWidth } = e.data;
-    const { exposure, contrast, highlights, shadows } = imageFilters
+    const { exposure, contrast, highlights, shadows, saturation } = imageFilters
     console.log(exposure/10)
     // apply(img, imageFilters, wasm, canvasWidth)
     const arrayRelWidth = (Math.floor(canvasWidth)-2)*4
@@ -17,6 +17,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
         contrast,
         highlights / 20,
         shadows / 10,
+        saturation / 2,
         arrayRelWidth
     )
     postMessage({
