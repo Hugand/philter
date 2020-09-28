@@ -100,6 +100,38 @@ function passArray8ToWasm0(arg, malloc) {
     return ptr;
 }
 
+let cachegetInt16Memory0 = null;
+function getInt16Memory0() {
+    if (cachegetInt16Memory0 === null || cachegetInt16Memory0.buffer !== wasm.memory.buffer) {
+        cachegetInt16Memory0 = new Int16Array(wasm.memory.buffer);
+    }
+    return cachegetInt16Memory0;
+}
+
+function getArrayI16FromWasm0(ptr, len) {
+    return getInt16Memory0().subarray(ptr / 2, ptr / 2 + len);
+}
+/**
+* @param {Uint8Array} elements
+* @returns {Int16Array}
+*/
+__exports.get_histogram_data = function(elements) {
+    try {
+        const retptr = wasm.__wbindgen_export_0.value - 16;
+        wasm.__wbindgen_export_0.value = retptr;
+        var ptr0 = passArray8ToWasm0(elements, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
+        wasm.get_histogram_data(retptr, ptr0, len0);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v1 = getArrayI16FromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 2);
+        return v1;
+    } finally {
+        wasm.__wbindgen_export_0.value += 16;
+    }
+};
+
 function getArrayU8FromWasm0(ptr, len) {
     return getUint8Memory0().subarray(ptr / 1, ptr / 1 + len);
 }
@@ -109,16 +141,18 @@ function getArrayU8FromWasm0(ptr, len) {
 * @param {number} contrast
 * @param {number} highlights
 * @param {number} shadows
+* @param {number} hue
+* @param {number} saturation
 * @param {number} canvas_width
 * @returns {Uint8Array}
 */
-__exports.apply_filters = function(elements, exposure, contrast, highlights, shadows, canvas_width) {
+__exports.apply_filters = function(elements, exposure, contrast, highlights, shadows, hue, saturation, canvas_width) {
     try {
         const retptr = wasm.__wbindgen_export_0.value - 16;
         wasm.__wbindgen_export_0.value = retptr;
         var ptr0 = passArray8ToWasm0(elements, wasm.__wbindgen_malloc);
         var len0 = WASM_VECTOR_LEN;
-        wasm.apply_filters(retptr, ptr0, len0, exposure, contrast, highlights, shadows, canvas_width);
+        wasm.apply_filters(retptr, ptr0, len0, exposure, contrast, highlights, shadows, hue, saturation, canvas_width);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var v1 = getArrayU8FromWasm0(r0, r1).slice();

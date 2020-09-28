@@ -27,20 +27,52 @@ function Canvas(props) {
             setCanvasHeight(newCanvasHeight)
 
             ctx.drawImage(imageObject, 1, 1, newCanvasWidth-2, newCanvasHeight-2);
-            setImageData(ctx.getImageData(0, 0, newCanvasWidth, newCanvasHeight))
+            
+            const newImageData = ctx.getImageData(0, 0, newCanvasWidth, newCanvasHeight)
 
-            setWorkerObject(ctx, newCanvasWidth, newCanvasHeight)
+            setImageData(newImageData)
+            getHistogramData(newImageData)
+            setWorkerObject(ctx, newCanvasWidth, newCanvasHeight, newImageData)
+
         }
         imageObject.src = URL.createObjectURL(image)
     }, [])
 
-    const setWorkerObject = (ctx, canvasWidth, canvasHeight) => {
+    const getHistogramData = (imgData) => {
+        const histogramData =  {
+            r: Array(255).fill(0),
+            g: Array(255).fill(0),
+            b: Array(255).fill(0)
+        }
+        let meanR = 0;
+        let meanG = 0;
+        let meanB = 0;
+      
+        for(let i = 0; i < imgData.data.length; i += 4 * 3) {
+          meanR = Math.round((imgData.data[i] + imgData.data[i+4] + imgData.data[i+8]) / 3)
+          meanG = Math.round((imgData.data[i+1] + imgData.data[i+5] + imgData.data[i+9]) / 3)
+          meanB = Math.round((imgData.data[i+2] + imgData.data[i+6] + imgData.data[i+10]) / 3)
+          histogramData.r[meanR] += 1
+          histogramData.g[meanG] += 1
+          histogramData.b[meanB] += 1
+        }
+
+        dispatch({
+            type: 'updateHistogramData',
+            newHistogramData: histogramData
+        })
+    }
+
+    const setWorkerObject = (ctx, canvasWidth, canvasHeight, imgData) => {
         const workerBuf = new Worker('./workers/worker.js')
 
         workerBuf.onmessage = e => {
             // if(e.data.filtered)
             ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), canvasWidth, canvasHeight), 0, 0)
-            console.log("FILTERED", e.data.exp)
+            dispatch({
+                type: 'updateHistogramData',
+                newHistogramData: e.data.histogram_data
+            })
         };
         setWorker(workerBuf)
     }

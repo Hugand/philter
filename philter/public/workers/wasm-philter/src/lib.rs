@@ -53,12 +53,39 @@ pub fn test_num(n: &mut Vec<i32>, i: usize) {
 }
 
 #[wasm_bindgen]
+pub fn get_histogram_data(elements: Vec<u8>) -> Vec<i16>{
+    let mut histogram_data: [i16; 766] = [0; 766];
+
+    let mut r;
+    let mut g;
+    let mut b;
+
+    let mut i = 0;
+
+    while i < elements.len() {
+        r = elements[i];
+        g = elements[i+1];
+        b = elements[i+2];
+
+        histogram_data[r as usize] += 1;
+        histogram_data[255 + g as usize] += 1;
+        histogram_data[510 + b as usize] += 1;
+
+        i += 4;
+    }
+
+    return histogram_data.to_vec();
+}
+
+#[wasm_bindgen]
 pub fn apply_filters(
     mut elements: Vec<u8>,
     exposure: f32,
     contrast: f32,
     highlights: f32,
     shadows: f32,
+    hue: i16,
+    saturation: i16,
     canvas_width: i32
 ) -> Vec<u8> {
     set_panic_hook();
@@ -67,8 +94,6 @@ pub fn apply_filters(
     let step = 4;
     
     let contrast_factor: f32 = (259.0*(contrast + 255.0))/(255.0*(259.0 - contrast));
-    let highlight_factor: f32 = (259.0*((1.0 * highlights) + 255.0))/(255.0*(259.0 - (1.0 * highlights)));
-    let shadow_factor: f32 = (259.0*((1.0 * shadows) + 255.0))/(255.0*(259.0 - (1.0 * shadows)));
 
     let initial_img_pos = canvas_width+(step*3);
     let final_img_pos = elements.len() as i32 - canvas_width - (step*3);
@@ -78,9 +103,15 @@ pub fn apply_filters(
     i = initial_img_pos;
     
     while i <= final_img_pos as i32 {
-        apply_exposure(&mut elements, i as usize, exposure);
-        apply_contrast(&mut elements, i as usize, contrast_factor);
-        if highlight_factor != 1.0 || shadow_factor != 1.0 {
+        if exposure != 0.0 {
+            apply_exposure(&mut elements, i as usize, exposure);
+        }
+        
+        if contrast != 0.0 {
+            apply_contrast(&mut elements, i as usize, contrast_factor);
+        }
+
+        if highlights != 0.0 || shadows != 0.0 {
             apply_shadow_high_correction(
                 &mut elements,
                 i as usize,
@@ -88,6 +119,10 @@ pub fn apply_filters(
                 highlights,
                 shadows
             );
+        }
+
+        if hue != 0 || saturation != 0 {
+            apply_hsv_adjustments(&mut elements, i as usize, hue, saturation);
         }
 
         if i == final_row_pos {
@@ -103,27 +138,16 @@ pub fn apply_filters(
 }
 
 pub fn apply_exposure(pixel: &mut Vec<u8>, pos: usize, exposure: f32) {
-    pixel[pos] = clamp(0, 255, (pixel[pos] as f32 * (exposure + 1.0)) as i16);
-    pixel[pos+1] = clamp(0, 255, (pixel[pos+1] as f32 * (exposure + 1.0)) as i16);
-    pixel[pos+2] = clamp(0, 255, (pixel[pos+2] as f32 * (exposure + 1.0)) as i16);
+    pixel[pos] = clamp(0, 255, (pixel[pos] as f32 * (exposure + 1.0)) as i16) as u8;
+    pixel[pos+1] = clamp(0, 255, (pixel[pos+1] as f32 * (exposure + 1.0)) as i16) as u8;
+    pixel[pos+2] = clamp(0, 255, (pixel[pos+2] as f32 * (exposure + 1.0)) as i16) as u8;
 }
 
 pub fn apply_contrast(pixel: &mut Vec<u8>, pos: usize, factor: f32){
-    pixel[pos] = clamp(0, 255, (factor * (pixel[pos] as f32 - 128.0) + 128.0).round() as i16);
-    pixel[pos+1] = clamp(0, 255, (factor * (pixel[pos+1] as f32 - 128.0) + 128.0).round() as i16);
-    pixel[pos+2] = clamp(0, 255, (factor * (pixel[pos+2] as f32 - 128.0) + 128.0).round() as i16);
+    pixel[pos] = clamp(0, 255, (factor * (pixel[pos] as f32 - 128.0) + 128.0).round() as i16) as u8;
+    pixel[pos+1] = clamp(0, 255, (factor * (pixel[pos+1] as f32 - 128.0) + 128.0).round() as i16) as u8;
+    pixel[pos+2] = clamp(0, 255, (factor * (pixel[pos+2] as f32 - 128.0) + 128.0).round() as i16) as u8;
 }
-
-pub fn clamp(min: u8, max: u8, val: i16) -> u8 {
-    if val < min as i16 {
-        return min;
-    } else if val > max as i16 {
-        return max;
-    } else {
-        return val as u8;
-    }
-}
-
 pub fn apply_shadow_high_correction(
     mut pixel: &mut Vec<u8>,
     pos: usize,
@@ -134,7 +158,7 @@ pub fn apply_shadow_high_correction(
     let stats: [f32; 2] = calculate_statistics(pixel, pos, canvas_width);
     let mean = stats[0];
     // let variance = stats[1];
-    // let v: f32 = get_rgb_to_hsv_value(&mut pixel, pos as usize) as f32;
+    // let v: f32 = calculate_v(&mut pixel, pos as usize) as f32;
 
     let shadow_exposure: f32 = calculate_shadow_exposure(mean, shadows);
     let highlight_exposure: f32 = calculate_highlight_exposure(mean, highlights);
@@ -150,19 +174,32 @@ pub fn apply_shadow_high_correction(
     }
 }
 
+pub fn apply_hsv_adjustments(pixel: &mut Vec<u8>, pos: usize, hue: i16, saturation: i16) {
+    let mut hsv: [i16; 3] = rgb_to_hsv(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
+
+    hsv[0] = clamp(0, 360, hsv[0] + hue) as i16;
+    hsv[1] = clamp(0, 100, hsv[1] + saturation) as i16;
+
+    let rgb = hsv_to_rgb(hsv[0], hsv[1] as f32 * 0.01, hsv[2] as f32 * 0.01);
+
+    pixel[pos] = clamp(0, 255, rgb[0] as i16) as u8;
+    pixel[pos+1] = clamp(0, 255, rgb[1] as i16) as u8;
+    pixel[pos+2] = clamp(0, 255, rgb[2] as i16) as u8;
+}
+
 pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [f32; 2] {
     let init_index: i32 = pos as i32 - canvas_width - 4;
     let final_index: i32 = pos as i32 + canvas_width + 4;
     let value_list: [u8; 9] = [
-        get_rgb_to_hsv_value(&mut pixel, init_index as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 - canvas_width) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 - canvas_width + 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 - 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, pos as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 + 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 + canvas_width - 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 + canvas_width) as usize),
-        get_rgb_to_hsv_value(&mut pixel, final_index as usize),
+        calculate_v(&mut pixel, init_index as usize),
+        calculate_v(&mut pixel, (pos as i32 - canvas_width) as usize),
+        calculate_v(&mut pixel, (pos as i32 - canvas_width + 4) as usize),
+        calculate_v(&mut pixel, (pos as i32 - 4) as usize),
+        calculate_v(&mut pixel, pos as usize),
+        calculate_v(&mut pixel, (pos as i32 + 4) as usize),
+        calculate_v(&mut pixel, (pos as i32 + canvas_width - 4) as usize),
+        calculate_v(&mut pixel, (pos as i32 + canvas_width) as usize),
+        calculate_v(&mut pixel, final_index as usize),
     ];
     let mut mean: f32 = 0.0;
     let mut variance: f32 = 0.0;
@@ -206,15 +243,98 @@ pub fn calculate_highlight_exposure(v: f32, highlights: f32) -> f32 {
     }
 }
 
-pub fn get_rgb_to_hsv_value(pixel: &mut Vec<u8>, pos: usize) -> u8 {
-    if pixel[pos] > pixel[pos+1] && pixel[pos] > pixel[pos+2]
-    || (pixel[pos] == pixel[pos+1]) && pixel[pos] > pixel[pos+2]
-    || (pixel[pos] == pixel[pos+2]) && pixel[pos] > pixel[pos+1] {
+
+pub fn rgb_to_hsv(r: f32, g: f32, b: f32) -> [i16; 3] {
+    let _r: f32 = r / 255.0;
+    let _g: f32 = g / 255.0;
+    let _b: f32 = b / 255.0;
+    let c_max: f32 = calculate_c_max(_r, _g, _b);
+    let c_min: f32 = calculate_c_min(_r, _g, _b);
+    let delta = c_max - c_min;
+    
+    let h = calculate_h(_r, _g, _b, delta, c_max);
+    let s = calculate_s(delta, c_max);
+    let v = (100.0 * c_max) as u8;
+    
+    return [h, s as i16, v as i16];
+}
+
+pub fn hsv_to_rgb(h: i16, s: f32, v: f32) -> [u8; 3] {
+    let c = v * s;
+    let x = c as f32 * ( 1.0 - ((h as f32 / 60.0) % 2.0 - 1.0).abs());
+    let m = v - c;
+    let mut buff: [f32; 3] = [0.0, 0.0, 0.0];
+    if h >= 0 && h < 60 {
+        buff = [c, x, 0.0];
+    } else if h >= 60 && h < 120 {
+        buff = [x, c, 0.0];
+    } else if h >= 120 && h < 180 {
+        buff = [0.0, c, x];
+    } else if h >= 180 && h < 240 {
+        buff = [0.0, x, c];
+    } else if h >= 240 && h < 300 {
+        buff = [x, 0.0, c];
+    } else if h >= 300 && h < 360 {
+        buff = [c, 0.0, x];
+    }
+
+    return [
+        ((buff[0] + m) * 255.0) as u8,
+        ((buff[1] + m) * 255.0) as u8,
+        ((buff[2] + m) * 255.0) as u8
+    ];
+
+}
+
+pub fn calculate_h(r: f32, g: f32, b: f32, delta: f32, c_max: f32) -> i16 {
+    if delta == 0.0 {
+        return 0;
+    } else if c_max == r {
+        return (60.0 * ( ((g - b) as f32 / delta) % 6.0) ) as i16;
+    } else if c_max == g {
+        return (60.0 * ( ((b - r) / delta) + 2.0) ) as i16;
+    } else if c_max == b {
+        return (60.0 * ( ((r - g) / delta) + 4.0) ) as i16;
+    } else { return 0; }
+}
+
+pub fn calculate_s(delta: f32, c_max: f32) -> u8 {
+    if c_max == 0.0 { return 0; }
+    else { return (100.0 * delta / c_max) as u8; }
+}
+
+pub fn calculate_v(pixel: &mut Vec<u8>, pos: usize) -> u8 {
+    let c_max = calculate_c_max(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
+
+    if c_max == pixel[pos] as f32 {
         return (100.0 * (pixel[pos] as f32 / 255.0)) as u8;
-    } else if pixel[pos+1] > pixel[pos] &&  pixel[pos+1] > pixel[pos+2]
-    || (pixel[pos+1] == pixel[pos+2]) && pixel[pos+1] > pixel[pos] {
+    } else if c_max == pixel[pos+1] as f32 {
         return (100.0 * (pixel[pos+1] as f32 / 255.0)) as u8;
-    } else if pixel[pos+2] > pixel[pos] && pixel[pos+2] > pixel[pos+1] {
+    } else if c_max == pixel[pos+2] as f32 {
         return (100.0 * (pixel[pos+2] as f32 / 255.0)) as u8;
     } else { return 0; }
+}
+
+pub fn calculate_c_max(r: f32, g: f32, b: f32) -> f32 {
+    if r >= g && r >= b { return r; }
+    else if g >= b && g >= r { return g; }
+    else if b >= r && b >= g { return b; }
+    else { return 0.0; }
+}
+
+pub fn calculate_c_min(r: f32, g: f32, b: f32) -> f32 {
+    if r <= g && r <= b { return r; }
+    else if g <= b && g <= r { return g; }
+    else if b <= r && b <= g { return b; }
+    else { return 0.0; }
+}
+
+pub fn clamp(min: i16, max: i16, val: i16) -> i16 {
+    if val < min{
+        return min;
+    } else if val > max{
+        return max;
+    } else {
+        return val;
+    }
 }
