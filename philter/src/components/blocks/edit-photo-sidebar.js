@@ -75,7 +75,7 @@ function EditPhotoSidebar(props) {
           newFilterValue: x})}
       ></SliderComponent>
 
-      <SliderComponent
+      {/* <SliderComponent
         label="Tone"
         min={-100}
         max={100}
@@ -106,7 +106,7 @@ function EditPhotoSidebar(props) {
           type: 'changeFilter',
           filterType: 'noise',
           newFilterValue: x})}
-      ></SliderComponent>
+      ></SliderComponent> */}
 
     </section>
   );
