@@ -41,6 +41,11 @@ const reducer = (state, action) => {
       }
     case 'resetData':
       return initialState
+    case 'updateHistogramData':
+      return {
+        ...state,
+        histogramData: action.newHistogramData
+      }
     default:
       return state
   }

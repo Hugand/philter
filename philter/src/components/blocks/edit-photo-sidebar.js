@@ -2,12 +2,15 @@ import React from 'react';
 import '../../styles/blocks/edit-photo-sidebar.scss';
 import SliderComponent from '../atoms/slider';
 import { useStateValue } from '../../state'
+import HistogramComponent from '../atoms/histogram';
 
 function EditPhotoSidebar(props) {
   const [ {imageFilters}, dispatch ] = useStateValue()
 
   return (
     <section className={ props.class } >
+
+      <HistogramComponent></HistogramComponent>
 
       <SliderComponent
         label="Exposure"

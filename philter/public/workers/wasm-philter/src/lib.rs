@@ -53,6 +53,31 @@ pub fn test_num(n: &mut Vec<i32>, i: usize) {
 }
 
 #[wasm_bindgen]
+pub fn get_histogram_data(elements: Vec<u8>) -> Vec<i16>{
+    let mut histogram_data: [i16; 766] = [0; 766];
+
+    let mut r;
+    let mut g;
+    let mut b;
+
+    let mut i = 0;
+
+    while i < elements.len() {
+        r = elements[i];
+        g = elements[i+1];
+        b = elements[i+2];
+
+        histogram_data[r as usize] += 1;
+        histogram_data[255 + g as usize] += 1;
+        histogram_data[510 + b as usize] += 1;
+
+        i += 4;
+    }
+
+    return histogram_data.to_vec();
+}
+
+#[wasm_bindgen]
 pub fn apply_filters(
     mut elements: Vec<u8>,
     exposure: f32,
@@ -146,7 +171,6 @@ pub fn apply_hsv_adjustments(pixel: &mut Vec<u8>, pos: usize, hue: i16, saturati
     let mut hsv: [i16; 3] = rgb_to_hsv(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
 
     hsv[0] = clamp(0, 360, hsv[0] + hue) as i16;
-    // hsv[0] *= hue;
     hsv[1] = clamp(0, 100, hsv[1] + saturation) as i16;
 
     let rgb = hsv_to_rgb(hsv[0], hsv[1] as f32 * 0.01, hsv[2] as f32 * 0.01);

@@ -3,7 +3,7 @@ importScripts("./wasm-philter/js/wasm_philter.js");
 delete WebAssembly.instantiateStreaming;
 wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
 .then(wasm => {
-  const { apply_filters } = wasmPhilter
+  const { apply_filters, get_histogram_data } = wasmPhilter
 
   onmessage = async e => {
     const { img, imageFilters, canvasWidth } = e.data;
@@ -21,9 +21,19 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
         saturation / 2,
         arrayRelWidth
     )
+
+    const histogram_data_buff = get_histogram_data(filtered);
+
+    const histogram_data = {
+      r: histogram_data_buff.slice(0, 255),
+      g: histogram_data_buff.slice(255, 510),
+      b: histogram_data_buff.slice(510, 765),
+    }
+
     postMessage({
       exp: exposure,
-      filtered
+      filtered,
+      histogram_data
     });
   };
 })
