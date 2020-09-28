@@ -113,17 +113,6 @@ pub fn apply_contrast(pixel: &mut Vec<u8>, pos: usize, factor: f32){
     pixel[pos+1] = clamp(0, 255, (factor * (pixel[pos+1] as f32 - 128.0) + 128.0).round() as i16);
     pixel[pos+2] = clamp(0, 255, (factor * (pixel[pos+2] as f32 - 128.0) + 128.0).round() as i16);
 }
-
-pub fn clamp(min: u8, max: u8, val: i16) -> u8 {
-    if val < min as i16 {
-        return min;
-    } else if val > max as i16 {
-        return max;
-    } else {
-        return val as u8;
-    }
-}
-
 pub fn apply_shadow_high_correction(
     mut pixel: &mut Vec<u8>,
     pos: usize,
@@ -134,7 +123,7 @@ pub fn apply_shadow_high_correction(
     let stats: [f32; 2] = calculate_statistics(pixel, pos, canvas_width);
     let mean = stats[0];
     // let variance = stats[1];
-    // let v: f32 = get_rgb_to_hsv_value(&mut pixel, pos as usize) as f32;
+    // let v: f32 = calculate_v(&mut pixel, pos as usize) as f32;
 
     let shadow_exposure: f32 = calculate_shadow_exposure(mean, shadows);
     let highlight_exposure: f32 = calculate_highlight_exposure(mean, highlights);
@@ -150,19 +139,23 @@ pub fn apply_shadow_high_correction(
     }
 }
 
+pub fn apply_saturation_adjustment() {
+
+}
+
 pub fn calculate_statistics(mut pixel: &mut Vec<u8>, pos: usize, canvas_width: i32) -> [f32; 2] {
     let init_index: i32 = pos as i32 - canvas_width - 4;
     let final_index: i32 = pos as i32 + canvas_width + 4;
     let value_list: [u8; 9] = [
-        get_rgb_to_hsv_value(&mut pixel, init_index as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 - canvas_width) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 - canvas_width + 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 - 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, pos as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 + 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 + canvas_width - 4) as usize),
-        get_rgb_to_hsv_value(&mut pixel, (pos as i32 + canvas_width) as usize),
-        get_rgb_to_hsv_value(&mut pixel, final_index as usize),
+        calculate_v(&mut pixel, init_index as usize),
+        calculate_v(&mut pixel, (pos as i32 - canvas_width) as usize),
+        calculate_v(&mut pixel, (pos as i32 - canvas_width + 4) as usize),
+        calculate_v(&mut pixel, (pos as i32 - 4) as usize),
+        calculate_v(&mut pixel, pos as usize),
+        calculate_v(&mut pixel, (pos as i32 + 4) as usize),
+        calculate_v(&mut pixel, (pos as i32 + canvas_width - 4) as usize),
+        calculate_v(&mut pixel, (pos as i32 + canvas_width) as usize),
+        calculate_v(&mut pixel, final_index as usize),
     ];
     let mut mean: f32 = 0.0;
     let mut variance: f32 = 0.0;
@@ -206,15 +199,71 @@ pub fn calculate_highlight_exposure(v: f32, highlights: f32) -> f32 {
     }
 }
 
-pub fn get_rgb_to_hsv_value(pixel: &mut Vec<u8>, pos: usize) -> u8 {
-    if pixel[pos] > pixel[pos+1] && pixel[pos] > pixel[pos+2]
-    || (pixel[pos] == pixel[pos+1]) && pixel[pos] > pixel[pos+2]
-    || (pixel[pos] == pixel[pos+2]) && pixel[pos] > pixel[pos+1] {
+
+pub fn rgb_to_hsv(r: f32, g: f32, b: f32) -> [u8; 3] {
+    let _r: f32 = r / 255.0;
+    let _g: f32 = g / 255.0;
+    let _b: f32 = b / 255.0;
+    let cMax = calculate_cMax(_r, _g, _b);
+    let cMin = calculate_cMin(_r, _g, _b);
+    let delta = cMax - cMin;
+    
+    let h = calculate_h(_r, _g, _b, delta, cMax);
+    let s = calculate_s(delta, cMax);
+    let v = cMax as u8;
+
+    return [h, s, v];
+}
+
+pub fn calculate_h(r: f32, g: f32, b: f32, delta: f32, cMax: f32) -> u8 {
+    if delta == 0.0 {
+        return 0;
+    } else if cMax == r {
+        return (60.0 * ( (g - b) as f32 / delta % 6.0) ) as u8;
+    } else if cMax == g {
+        return (60.0 * ( (b - r) / delta + 2.0) ) as u8;
+    } else if cMax == b {
+        return (60.0 * ( (r - g) / delta + 4.0) ) as u8;
+    } else { return 0; }
+}
+
+pub fn calculate_s(delta: f32, cMax: f32) -> u8 {
+    if cMax == 0.0 { return 0; }
+    else { return (delta / cMax) as u8; }
+}
+
+pub fn calculate_v(pixel: &mut Vec<u8>, pos: usize) -> u8 {
+    let cMax = calculate_cMax(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32);
+
+    if cMax == pixel[pos] as f32 {
         return (100.0 * (pixel[pos] as f32 / 255.0)) as u8;
-    } else if pixel[pos+1] > pixel[pos] &&  pixel[pos+1] > pixel[pos+2]
-    || (pixel[pos+1] == pixel[pos+2]) && pixel[pos+1] > pixel[pos] {
+    } else if cMax == pixel[pos+1] as f32 {
         return (100.0 * (pixel[pos+1] as f32 / 255.0)) as u8;
-    } else if pixel[pos+2] > pixel[pos] && pixel[pos+2] > pixel[pos+1] {
+    } else if cMax == pixel[pos+2] as f32 {
         return (100.0 * (pixel[pos+2] as f32 / 255.0)) as u8;
     } else { return 0; }
+}
+
+pub fn calculate_cMax(r: f32, g: f32, b: f32) -> f32 {
+    if r >= g && r >= b { return r; }
+    else if g >= b && g >= r { return g; }
+    else if b >= r && b >= g { return b; }
+    else { return 0.0; }
+}
+
+pub fn calculate_cMin(r: f32, g: f32, b: f32) -> f32 {
+    if r <= g && r <= b { return r; }
+    else if g <= b && g <= r { return g; }
+    else if b <= r && b <= g { return b; }
+    else { return 0.0; }
+}
+
+pub fn clamp(min: u8, max: u8, val: i16) -> u8 {
+    if val < min as i16 {
+        return min;
+    } else if val > max as i16 {
+        return max;
+    } else {
+        return val as u8;
+    }
 }
