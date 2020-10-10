@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useStateValue } from  '../../state'
+import * as lib from 'ml-fft'
 
 function Canvas(props) {
     const [ { imageFilters, image }, dispatch ] = useStateValue()
@@ -16,6 +17,7 @@ function Canvas(props) {
     const [ applyFilterTimeout, setApplyFilterTimeout ] = useState()
 
     useEffect(() => {
+        console.log(lib)
         const canvas = canvasRef.current
         const ctx = canvas.getContext('2d')
         setCanvas(canvas)
@@ -67,7 +69,6 @@ function Canvas(props) {
         const workerBuf = new Worker('./workers/worker.js')
 
         workerBuf.onmessage = e => {
-            // if(e.data.filtered)
             ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), canvasWidth, canvasHeight), 0, 0)
             dispatch({
                 type: 'updateHistogramData',
@@ -87,6 +88,7 @@ function Canvas(props) {
                         img: imageData.data,
                         imageFilters,
                         canvasWidth,
+                        canvasHeight
                     });
             }, 300))
     }, [imageFilters])
@@ -96,6 +98,11 @@ function Canvas(props) {
         width={canvasWidth}
         height={canvasHeight}
         {...props} />;
+}
+
+
+function cb() {
+    console.log(lib)
 }
 
 function scaleToFit(img, canvas){
