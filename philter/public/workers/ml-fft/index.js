@@ -1,7 +1,9 @@
 'use strict';
 
-// let FFTUtils = require("./FFTUtils");
-// let FFT = require('./fftlib');
+/**
+ * THIS MODULE WAS NOT MADE BY ME!
+ * ORIGINAL CODE: https://github.com/mljs/fft
+ */
 
 
 /**

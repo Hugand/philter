@@ -19,7 +19,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
       hue,
       blur
     } = imageFilters
-    // apply(img, imageFilters, wasm, canvasWidth)
+
     const arrayRelWidth = (Math.floor(canvasWidth)-2)*4
 
     let color_enhanced = apply_filters(
@@ -33,66 +33,86 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
         arrayRelWidth
     )
 
-    let fft_filtered = apply_FFT_filter(color_enhanced, [canvasWidth, canvasHeight], blur)
-
-    const histogram_data = getHistogramData(fft_filtered)
-    console.log(histogram_data)
-
-    postMessage({
-      exp: exposure,
-      filtered: fft_filtered,
-      histogram_data
-    });
+    apply_FFT_filter(color_enhanced, canvasWidth, canvasHeight, blur)
   };
 })
 
-function apply_FFT_filter(imageData, dims, sigma) {
-  var [nCols, nRows] = dims
+function apply_FFT_filter(imageData, cw, ch, blur) {
+  const [ rData, gData, bData ] = splitColorChannels(imageData)
+  const KERNEl_SIZE = blur + 4
+  const SIGMA = blur + 1
+  const kernel = generateGaussianKernel(KERNEl_SIZE, SIGMA)
+  let channelState = [ false, false, false ]
+  const [ rWorker, gWorker, bWorker ] = setupWorkers(imageData, channelState)
+  const fftFilterData = {
+    nRows: ch,
+    nCols: cw,
+    dims: [cw, ch],
+    blur,
+    kernel
+  }
+  rWorker.postMessage({
+    ...fftFilterData,
+    channelData: rData
+  })
+  gWorker.postMessage({
+    ...fftFilterData,
+    channelData: gData
+  })
+  bWorker.postMessage({
+    ...fftFilterData,
+    channelData: bData
+  })
 
+  for(let i = 3, h = 0; i < imageData.length; i+=4, h++) {
+    imageData[i] = 255
+  }
+}
+
+function splitColorChannels(imageData) {
   let rData = []
   let gData = []
   let bData = []
 
-  // Split color channel
   for(let i = 0, h = 0; i < imageData.length; i+=4, h++){
     rData.push(imageData[i])
     gData.push(imageData[i+1])
     bData.push(imageData[i+2])
   }
 
-  // Create margins to have Radix2 image sizes
-  let rDataBuff = FFTUtils.toRadix2(rData, nRows, nCols);
-  let gDataBuff = FFTUtils.toRadix2(gData, nRows, nCols);
-  let bDataBuff = FFTUtils.toRadix2(bData, nRows, nCols);
+  return [ rData, gData, bData ]
+}
 
-  rData = rDataBuff.data
-  gData = gDataBuff.data
-  bData = bDataBuff.data
+function setupWorkers(imageData, channelState) {
+  let rWorker = new Worker('./fft_filter_worker.js')
+  let gWorker = new Worker('./fft_filter_worker.js')
+  let bWorker = new Worker('./fft_filter_worker.js')
 
-  nRows = rDataBuff.rows
-  nCols = rDataBuff.cols
+  rWorker.onmessage = e => replaceColorChannel(e, imageData, 0, channelState);
+  gWorker.onmessage = e => replaceColorChannel(e, imageData, 1, channelState);
+  bWorker.onmessage = e => replaceColorChannel(e, imageData, 2, channelState);
 
-  const kernel = generateGaussianKernel(5, sigma)
+  return [ rWorker, gWorker, bWorker ]
+}
 
-  // CONVOLVE IMAGE WITH KERNEL
-  var iftDataR =  FFTUtils.convolute(rData, kernel, nRows, nCols);
-  var iftDataG =  FFTUtils.convolute(gData, kernel, nRows, nCols);
-  var iftDataB =  FFTUtils.convolute(bData, kernel, nRows, nCols);
+function replaceColorChannel(e, data, initialPosition, channelState) {
+  let { channelData } = e.data
 
-  // CROP THE IMAGE TO REMOVE PADDING
-  iftDataR = FFTUtils.crop(iftDataR, nRows, nCols, dims[1], dims[0])
-  iftDataG = FFTUtils.crop(iftDataG, nRows, nCols, dims[1], dims[0])
-  iftDataB = FFTUtils.crop(iftDataB, nRows, nCols, dims[1], dims[0])
-
-  // APPLY CHANGES TO NEWIMAGEDATA
-  for(let i = 0, h = 0; i < imageData.length; i+=4, h++) {
-    imageData[i] = Math.round(iftDataR[h])
-    imageData[i+1] = Math.round(iftDataG[h])
-    imageData[i+2] = Math.round(iftDataB[h])
-    imageData[i+3] = 255
+  for(let i = initialPosition, h = 0; i < data.length; i+=4, h++) {
+    data[i] = Math.round(channelData[h])
   }
 
-  return imageData
+  channelState[initialPosition] = true
+
+  // If all channels were convuluted, then get the histogram data and postMessage
+  if(channelState[0] && channelState[1] && channelState[2]) {
+    const histogram_data = getHistogramData(data)
+
+    postMessage({
+      filtered: data,
+      histogram_data
+    })
+  }
 }
 
 function generateGaussianKernel(size, sigma) {
@@ -116,7 +136,6 @@ function generateGaussianKernel(size, sigma) {
 }
 
 const getHistogramData = (imgData) => {
-  console.log(imgData)
   const histogramData =  {
       r: Array(255).fill(0),
       g: Array(255).fill(0),

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useStateValue } from  '../../state'
-import * as lib from 'ml-fft'
 
 function Canvas(props) {
     const [ { imageFilters, image }, dispatch ] = useStateValue()
@@ -17,7 +16,6 @@ function Canvas(props) {
     const [ applyFilterTimeout, setApplyFilterTimeout ] = useState()
 
     useEffect(() => {
-        console.log(lib)
         const canvas = canvasRef.current
         const ctx = canvas.getContext('2d')
         setCanvas(canvas)
@@ -98,11 +96,6 @@ function Canvas(props) {
         width={canvasWidth}
         height={canvasHeight}
         {...props} />;
-}
-
-
-function cb() {
-    console.log(lib)
 }
 
 function scaleToFit(img, canvas){
