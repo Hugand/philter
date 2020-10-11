@@ -19,7 +19,8 @@ const initialState = {
     highlights: 0,
     shadows: 0,
     tone: 0,
-    noise: 0
+    noise: 0,
+    blur: 0
   }
 }
 
