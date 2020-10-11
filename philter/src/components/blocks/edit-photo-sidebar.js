@@ -78,16 +78,17 @@ function EditPhotoSidebar(props) {
           newFilterValue: x})}
       ></SliderComponent>
 
-      {/* <SliderComponent
-        label="Tone"
-        min={-100}
-        max={100}
-        value={imageFilters.tone}
+      <SliderComponent
+        label="Blur"
+        min={0}
+        max={5}
+        value={imageFilters.blur}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
-          filterType: 'tone',
+          filterType: 'blur',
           newFilterValue: x})}
       ></SliderComponent>
+      {/* 
 
       <SliderComponent
         label="Sharpness"
