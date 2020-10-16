@@ -18,9 +18,9 @@ const initialState = {
     sharpness: 0,
     highlights: 0,
     shadows: 0,
-    tone: 0,
     noise: 0,
-    blur: 0
+    blur: 0,
+    invert_colors: -1,
   }
 }
 

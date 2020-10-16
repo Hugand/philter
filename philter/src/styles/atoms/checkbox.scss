@@ -1,0 +1,33 @@
+
+.checkbox-container {
+    display: flex;
+    flex-direction: row;
+
+    input {
+        display: none;
+    }
+
+    .checkable {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        border: 1px solid white;
+        border-radius: 3px;
+        margin-right: 0.5rem;
+
+        .checkable-fill {
+            position: absolute;
+            width: 75%;
+            height: 75%;
+            background-color: white;
+            border-radius: 2px;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+        }
+    }
+
+    &:hover {
+        cursor: pointer;
+    }
+}

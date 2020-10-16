@@ -1,6 +1,7 @@
 import React from 'react';
 import '../../styles/blocks/edit-photo-sidebar.scss';
 import SliderComponent from '../atoms/slider';
+import Checkbox from '../atoms/checkbox';
 import { useStateValue } from '../../state'
 import HistogramComponent from '../atoms/histogram';
 
@@ -99,6 +100,15 @@ function EditPhotoSidebar(props) {
           filterType: 'noise',
           newFilterValue: x})}
       ></SliderComponent>
+
+      <Checkbox
+        label="Invert colors"
+        value={imageFilters.invert_colors}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'invert_colors',
+          newFilterValue: x})}
+      ></Checkbox>
 
       {/* 
        <SliderComponent

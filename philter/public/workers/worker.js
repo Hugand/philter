@@ -51,7 +51,12 @@ function apply_FFT_filter(imageData, cw, ch, blur) {
   const [ rData, gData, bData ] = splitColorChannels(imageData)
   const KERNEl_SIZE = blur + 4
   const SIGMA = blur + 1
-  const kernel = generateGaussianKernel(KERNEl_SIZE, SIGMA)
+  // const kernel = generateGaussianKernel(KERNEl_SIZE, SIGMA)
+  const kernel = [
+    [0, -1, 0],
+    [-1, 5, -1],
+    [0, -1, 0],
+  ]
   let channelState = [ false, false, false ]
   const [ rWorker, gWorker, bWorker ] = setupWorkers(imageData, channelState)
   const fftFilterData = {
