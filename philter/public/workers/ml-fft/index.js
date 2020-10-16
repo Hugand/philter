@@ -342,7 +342,6 @@ var FFTUtils= {
             }
         }
 
-        //console.log(tempTransform);
         row1 = null;
         row2 = null;
         // transform columns
@@ -369,7 +368,6 @@ var FFTUtils= {
             }
         }
 
-        //console.log(finalTransform);
         return finalTransform;
 
     },
@@ -529,7 +527,6 @@ var FFTUtils= {
             return data;
 
         var options = Object.assign({}, opt);
-        console.log(nCols, nRows)
 
         var output = new Array(nCols*nRows);
 

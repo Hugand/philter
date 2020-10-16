@@ -39,7 +39,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
     )
 
     if(blur > 0)
-      apply_FFT_filter(color_enhanced, canvasWidth, canvasHeight, blur)
+      apply_FFT_filter(color_enhanced, canvasWidth, canvasHeight, blur, b_w > 0)
     else {
       const histogram_data = getHistogramData(color_enhanced)
 
@@ -51,13 +51,13 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
   };
 })
 
-function apply_FFT_filter(imageData, cw, ch, blur) {
+function apply_FFT_filter(imageData, cw, ch, blur, isBW) {
   const [ rData, gData, bData ] = splitColorChannels(imageData)
   const KERNEl_SIZE = blur + 4
   const SIGMA = blur + 1
   const kernel = generateGaussianKernel(KERNEl_SIZE, SIGMA)
   let channelState = [ false, false, false ]
-  const [ rWorker, gWorker, bWorker ] = setupWorkers(imageData, channelState)
+  const [ rWorker, gWorker, bWorker ] = setupWorkers(imageData, channelState, isBW)
   const fftFilterData = {
     nRows: ch,
     nCols: cw,
@@ -69,15 +69,17 @@ function apply_FFT_filter(imageData, cw, ch, blur) {
     ...fftFilterData,
     channelData: rData
   })
-  gWorker.postMessage({
-    ...fftFilterData,
-    channelData: gData
-  })
-  bWorker.postMessage({
-    ...fftFilterData,
-    channelData: bData
-  })
 
+  if(!isBW) {
+    gWorker.postMessage({
+      ...fftFilterData,
+      channelData: gData
+    })
+    bWorker.postMessage({
+      ...fftFilterData,
+      channelData: bData
+    })
+  }
   for(let i = 3, h = 0; i < imageData.length; i+=4, h++) {
     imageData[i] = 255
   }
@@ -97,14 +99,18 @@ function splitColorChannels(imageData) {
   return [ rData, gData, bData ]
 }
 
-function setupWorkers(imageData, channelState) {
+function setupWorkers(imageData, channelState, isBW) {
   let rWorker = new Worker('./fft_filter_worker.js')
   let gWorker = new Worker('./fft_filter_worker.js')
   let bWorker = new Worker('./fft_filter_worker.js')
 
-  rWorker.onmessage = e => replaceColorChannel(e, imageData, 0, channelState);
-  gWorker.onmessage = e => replaceColorChannel(e, imageData, 1, channelState);
-  bWorker.onmessage = e => replaceColorChannel(e, imageData, 2, channelState);
+  if(isBW) {
+    rWorker.onmessage = e => replaceColorChannel(e, imageData, 4, channelState);
+  } else {
+    rWorker.onmessage = e => replaceColorChannel(e, imageData, 0, channelState);
+    gWorker.onmessage = e => replaceColorChannel(e, imageData, 1, channelState);
+    bWorker.onmessage = e => replaceColorChannel(e, imageData, 2, channelState);
+  }
 
   return [ rWorker, gWorker, bWorker ]
 }
@@ -112,14 +118,21 @@ function setupWorkers(imageData, channelState) {
 function replaceColorChannel(e, data, initialPosition, channelState) {
   let { channelData } = e.data
 
-  for(let i = initialPosition, h = 0; i < data.length; i+=4, h++) {
-    data[i] = Math.round(channelData[h])
+  // If initialPosition === 4 it means the image is in Black and white
+  for(let i = initialPosition === 4 ? 0 : initialPosition, h = 0; i < data.length; i+=4, h++) {
+    if(initialPosition === 4){
+      data[i] = Math.round(channelData[h])
+      data[i+1] = Math.round(channelData[h])
+      data[i+2] = Math.round(channelData[h])
+    } else {
+      data[i] = Math.round(channelData[h])
+    }
   }
 
   channelState[initialPosition] = true
 
   // If all channels were convuluted, then get the histogram data and postMessage
-  if(channelState[0] && channelState[1] && channelState[2]) {
+  if(channelState[0] && channelState[1] && channelState[2] || initialPosition === 4) {
     const histogram_data = getHistogramData(data)
 
     postMessage({

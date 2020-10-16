@@ -120,19 +120,6 @@ function EditPhotoSidebar(props) {
           filterType: 'invert_colors',
           newFilterValue: x})}
       ></Checkbox>
-
-      {/* 
-       <SliderComponent
-        label="Sharpness"
-        min={-100}
-        max={100}
-        value={imageFilters.sharpness}
-        setValue={({x}) => dispatch({
-          type: 'changeFilter',
-          filterType: 'sharpness',
-          newFilterValue: x})}
-      ></SliderComponent> */}
-
     </section>
   );
 }
