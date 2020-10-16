@@ -342,7 +342,6 @@ var FFTUtils= {
             }
         }
 
-        //console.log(tempTransform);
         row1 = null;
         row2 = null;
         // transform columns
@@ -369,7 +368,6 @@ var FFTUtils= {
             }
         }
 
-        //console.log(finalTransform);
         return finalTransform;
 
     },
