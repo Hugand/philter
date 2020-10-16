@@ -143,16 +143,19 @@ function getArrayU8FromWasm0(ptr, len) {
 * @param {number} shadows
 * @param {number} hue
 * @param {number} saturation
+* @param {number} noise
+* @param {number} invert_colors
+* @param {number} b_w
 * @param {number} canvas_width
 * @returns {Uint8Array}
 */
-__exports.apply_filters = function(elements, exposure, contrast, highlights, shadows, hue, saturation, canvas_width) {
+__exports.apply_filters = function(elements, exposure, contrast, highlights, shadows, hue, saturation, noise, invert_colors, b_w, canvas_width) {
     try {
         const retptr = wasm.__wbindgen_export_0.value - 16;
         wasm.__wbindgen_export_0.value = retptr;
         var ptr0 = passArray8ToWasm0(elements, wasm.__wbindgen_malloc);
         var len0 = WASM_VECTOR_LEN;
-        wasm.apply_filters(retptr, ptr0, len0, exposure, contrast, highlights, shadows, hue, saturation, canvas_width);
+        wasm.apply_filters(retptr, ptr0, len0, exposure, contrast, highlights, shadows, hue, saturation, noise, invert_colors, b_w, canvas_width);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var v1 = getArrayU8FromWasm0(r0, r1).slice();
@@ -225,6 +228,8 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 
+function notDefined(what) { return () => { throw new Error(`${what} is not defined`); }; }
+
 async function load(module, imports) {
     if (typeof Response === 'function' && module instanceof Response) {
 
@@ -293,6 +298,10 @@ async function init(input) {
     };
     imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
         takeObject(arg0);
+    };
+    imports.wbg.__wbg_random_a3b3bcffa2ed629c = typeof Math.random == 'function' ? Math.random : notDefined('Math.random');
+    imports.wbg.__wbindgen_throw = function(arg0, arg1) {
+        throw new Error(getStringFromWasm0(arg0, arg1));
     };
 
     if (typeof input === 'string' || (typeof Request === 'function' && input instanceof Request) || (typeof URL === 'function' && input instanceof URL)) {

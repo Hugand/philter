@@ -1,6 +1,7 @@
 import React from 'react';
 import '../../styles/blocks/edit-photo-sidebar.scss';
 import SliderComponent from '../atoms/slider';
+import Checkbox from '../atoms/checkbox';
 import { useStateValue } from '../../state'
 import HistogramComponent from '../atoms/histogram';
 
@@ -88,30 +89,37 @@ function EditPhotoSidebar(props) {
           filterType: 'blur',
           newFilterValue: x})}
       ></SliderComponent>
-      {/* 
-
-      <SliderComponent
-        label="Sharpness"
-        min={-100}
-        max={100}
-        value={imageFilters.sharpness}
-        setValue={({x}) => dispatch({
-          type: 'changeFilter',
-          filterType: 'sharpness',
-          newFilterValue: x})}
-      ></SliderComponent>
 
       <SliderComponent
         label="Noise"
-        min={-100}
+        min={0}
         max={100}
         value={imageFilters.noise}
         setValue={({x}) => dispatch({
           type: 'changeFilter',
           filterType: 'noise',
           newFilterValue: x})}
-      ></SliderComponent> */}
+      ></SliderComponent>
 
+      <SliderComponent
+        label="Black and White"
+        min={0}
+        max={3}
+        value={imageFilters.b_w}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'b_w',
+          newFilterValue: x})}
+      ></SliderComponent>
+
+      <Checkbox
+        label="Invert colors"
+        value={imageFilters.invert_colors}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'invert_colors',
+          newFilterValue: x})}
+      ></Checkbox>
     </section>
   );
 }
