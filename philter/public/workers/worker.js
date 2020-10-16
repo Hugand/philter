@@ -17,7 +17,8 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
       saturation,
       hue,
       blur,
-      noise
+      noise,
+      invert_colors
     } = imageFilters
 
     const arrayRelWidth = (Math.floor(canvasWidth)-2)*4
@@ -31,6 +32,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
         hue / 2,
         saturation / 2,
         noise,
+        invert_colors,
         arrayRelWidth
     )
 
@@ -51,12 +53,7 @@ function apply_FFT_filter(imageData, cw, ch, blur) {
   const [ rData, gData, bData ] = splitColorChannels(imageData)
   const KERNEl_SIZE = blur + 4
   const SIGMA = blur + 1
-  // const kernel = generateGaussianKernel(KERNEl_SIZE, SIGMA)
-  const kernel = [
-    [0, -1, 0],
-    [-1, 5, -1],
-    [0, -1, 0],
-  ]
+  const kernel = generateGaussianKernel(KERNEl_SIZE, SIGMA)
   let channelState = [ false, false, false ]
   const [ rWorker, gWorker, bWorker ] = setupWorkers(imageData, channelState)
   const fftFilterData = {

@@ -85,6 +85,7 @@ pub fn apply_filters(
     hue: i16,
     saturation: i16,
     noise: i16,
+    invert_colors: u8,
     canvas_width: i32
 ) -> Vec<u8> {
     set_panic_hook();
@@ -126,6 +127,10 @@ pub fn apply_filters(
 
         if noise != 0 {
             apply_noise(&mut elements, i as usize, noise as usize);
+        }
+
+        if invert_colors == 1 {
+            apply_color_invert(&mut elements, i as usize);
         }
 
         if i == final_row_pos {
@@ -175,6 +180,12 @@ pub fn apply_shadow_high_correction(
     if highlights != 0.0 {
         apply_exposure(&mut pixel, pos, highlight_exposure);
     }
+}
+
+pub fn apply_color_invert(pixel: &mut Vec<u8>, pos: usize) {
+    pixel[pos] = 255 - pixel[pos];
+    pixel[pos+1] = 255 - pixel[pos+1];
+    pixel[pos+2] = 255 - pixel[pos+2];
 }
 
 pub fn apply_noise(pixel: &mut Vec<u8>, pos: usize, noise: usize) {
