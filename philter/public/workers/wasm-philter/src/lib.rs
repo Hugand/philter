@@ -86,6 +86,7 @@ pub fn apply_filters(
     saturation: i16,
     noise: i16,
     invert_colors: u8,
+    b_w: u8,
     canvas_width: i32
 ) -> Vec<u8> {
     set_panic_hook();
@@ -131,6 +132,10 @@ pub fn apply_filters(
 
         if invert_colors == 1 {
             apply_color_invert(&mut elements, i as usize);
+        }
+
+        if b_w > 0 {
+            apply_black_white(&mut elements, i as usize, b_w as usize);
         }
 
         if i == final_row_pos {
@@ -186,6 +191,14 @@ pub fn apply_color_invert(pixel: &mut Vec<u8>, pos: usize) {
     pixel[pos] = 255 - pixel[pos];
     pixel[pos+1] = 255 - pixel[pos+1];
     pixel[pos+2] = 255 - pixel[pos+2];
+}
+
+pub fn apply_black_white(pixel: &mut Vec<u8>, pos: usize, b_w: usize) {
+    let b_w_channel: usize = pos + b_w - 1;
+
+    pixel[pos] = pixel[b_w_channel];
+    pixel[pos+1] = pixel[b_w_channel];
+    pixel[pos+2] = pixel[b_w_channel];
 }
 
 pub fn apply_noise(pixel: &mut Vec<u8>, pos: usize, noise: usize) {

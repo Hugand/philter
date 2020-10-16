@@ -18,7 +18,8 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
       hue,
       blur,
       noise,
-      invert_colors
+      invert_colors,
+      b_w
     } = imageFilters
 
     const arrayRelWidth = (Math.floor(canvasWidth)-2)*4
@@ -33,6 +34,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
         saturation / 2,
         noise,
         invert_colors,
+        b_w,
         arrayRelWidth
     )
 

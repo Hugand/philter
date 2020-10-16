@@ -21,6 +21,7 @@ const initialState = {
     noise: 0,
     blur: 0,
     invert_colors: -1,
+    b_w: 0
   }
 }
 

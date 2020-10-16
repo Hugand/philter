@@ -101,6 +101,17 @@ function EditPhotoSidebar(props) {
           newFilterValue: x})}
       ></SliderComponent>
 
+      <SliderComponent
+        label="Black and White"
+        min={0}
+        max={3}
+        value={imageFilters.b_w}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'b_w',
+          newFilterValue: x})}
+      ></SliderComponent>
+
       <Checkbox
         label="Invert colors"
         value={imageFilters.invert_colors}
