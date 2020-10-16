@@ -88,9 +88,20 @@ function EditPhotoSidebar(props) {
           filterType: 'blur',
           newFilterValue: x})}
       ></SliderComponent>
-      {/* 
 
       <SliderComponent
+        label="Noise"
+        min={0}
+        max={100}
+        value={imageFilters.noise}
+        setValue={({x}) => dispatch({
+          type: 'changeFilter',
+          filterType: 'noise',
+          newFilterValue: x})}
+      ></SliderComponent>
+
+      {/* 
+       <SliderComponent
         label="Sharpness"
         min={-100}
         max={100}
@@ -98,17 +109,6 @@ function EditPhotoSidebar(props) {
         setValue={({x}) => dispatch({
           type: 'changeFilter',
           filterType: 'sharpness',
-          newFilterValue: x})}
-      ></SliderComponent>
-
-      <SliderComponent
-        label="Noise"
-        min={-100}
-        max={100}
-        value={imageFilters.noise}
-        setValue={({x}) => dispatch({
-          type: 'changeFilter',
-          filterType: 'noise',
           newFilterValue: x})}
       ></SliderComponent> */}
 

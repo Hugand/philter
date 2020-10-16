@@ -108,7 +108,7 @@ function scaleToFit(img, canvas){
     const canvasWidth = img.width * scale
     const canvasHeight = img.height * scale
 
-    return [ canvasWidth+2, canvasHeight+2 ]
+    return [ parseInt(canvasWidth+2), parseInt(canvasHeight+2) ]
 }
 
 export default Canvas;

@@ -7,7 +7,6 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
 .then(wasm => {
   const { apply_filters } = wasmPhilter
 
-
   onmessage = async e => {
     const { img, imageFilters, canvasWidth, canvasHeight } = e.data;
     const {
@@ -17,7 +16,8 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
       shadows,
       saturation,
       hue,
-      blur
+      blur,
+      noise
     } = imageFilters
 
     const arrayRelWidth = (Math.floor(canvasWidth)-2)*4
@@ -30,10 +30,20 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
         shadows / 10,
         hue / 2,
         saturation / 2,
+        noise,
         arrayRelWidth
     )
 
-    apply_FFT_filter(color_enhanced, canvasWidth, canvasHeight, blur)
+    if(blur > 0)
+      apply_FFT_filter(color_enhanced, canvasWidth, canvasHeight, blur)
+    else {
+      const histogram_data = getHistogramData(color_enhanced)
+
+      postMessage({
+        filtered: color_enhanced,
+        histogram_data
+      })
+    }
   };
 })
 

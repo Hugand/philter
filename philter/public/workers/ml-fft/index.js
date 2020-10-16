@@ -529,6 +529,7 @@ var FFTUtils= {
             return data;
 
         var options = Object.assign({}, opt);
+        console.log(nCols, nRows)
 
         var output = new Array(nCols*nRows);
 
