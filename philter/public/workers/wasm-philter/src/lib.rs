@@ -205,16 +205,16 @@ pub fn apply_noise(pixel: &mut Vec<u8>, pos: usize, noise: usize) {
     // let mut rng = thread_rng();
     let is_pixel_noisy: bool = generate_rand(100) as usize <= noise;
     let c_max = calculate_c_max(pixel[pos] as f32, pixel[pos+1] as f32, pixel[pos+2] as f32) as u8;
-    let pixel_change: u8 = generate_rand((if 255 - c_max > 100 { 100 } else { 255 - c_max }) as i16) as u8;
+    let pixel_change: u8 = generate_rand((if 255 - c_max >= 100 { 100 } else { 255 - c_max }) as i16) as u8;
     
     if is_pixel_noisy {
         pixel[pos] = pixel[pos] + pixel_change;
         pixel[pos+1] = pixel[pos+1] + pixel_change;
         pixel[pos+2] = pixel[pos+2] + pixel_change;
 
-        pixel[pos] = clamp(0, 255, (pixel[pos] + pixel_change) as i16) as u8;
-        pixel[pos+1] = clamp(0, 255, (pixel[pos+1] + pixel_change) as i16) as u8;
-        pixel[pos+2] = clamp(0, 255, (pixel[pos+2] + pixel_change) as i16) as u8;
+        pixel[pos] = clamp(0, 255, pixel[pos] as i16) as u8;
+        pixel[pos+1] = clamp(0, 255, pixel[pos+1] as i16) as u8;
+        pixel[pos+2] = clamp(0, 255, pixel[pos+2] as i16) as u8;
     }
 }
 
