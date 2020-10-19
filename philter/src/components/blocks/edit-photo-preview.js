@@ -1,13 +1,24 @@
 import React from 'react';
 import '../../styles/blocks/edit-photo-preview.scss';
 import Canvas from '../atoms/canvas';
+import { useStateValue } from  '../../state'
 
 function EditPhotoPreview(props) {
+  const [ { imageData, image } ] = useStateValue()
+
+
+  const saveImage = () => {
+    var link = document.createElement('a')
+    link.download = image.name
+    link.href = imageData.toDataURL(image.type, 1.0).replace("image/png", "image/octet-stream");
+    link.click()
+  }
+
   return (
     <section className={ props.class }>
       <header>
           <button className="btn-secondary" onClick={props.goBack}>back</button>
-          <button className="btn-primary">Save as</button>
+          <button className="btn-primary" onClick={saveImage}>Save as</button>
       </header>
 
       {
