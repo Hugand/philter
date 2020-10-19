@@ -12,6 +12,7 @@ const initialState = {
   image: null,
   imageData: null,
   realSizedCanvas: null,
+  histogramData: null,
   imageFilters: {
     exposure: 0,
     contrast: 0,
