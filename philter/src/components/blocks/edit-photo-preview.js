@@ -1,8 +1,11 @@
 import React from 'react';
 import '../../styles/blocks/edit-photo-preview.scss';
 import Canvas from '../atoms/canvas';
+import { useStateValue } from  '../../state'
 
 function EditPhotoPreview(props) {
+  const [ { imageData, image }, dispatch ] = useStateValue()
+
   return (
     <section className={ props.class }>
       <header>
