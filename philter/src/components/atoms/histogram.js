@@ -3,7 +3,7 @@ import "../../styles/atoms/histogram.scss"
 import { useStateValue } from  '../../state'
 
 function HistogramComponent() {
-    const [ { histogramData }, dispatch ] = useStateValue()
+    const [ { histogramData } ] = useStateValue()
     const [ ctx, setCtx ] = useState()
     const canvasRef = useRef(null)
 
@@ -14,7 +14,7 @@ function HistogramComponent() {
     }, [])
 
     useEffect(() => {
-        if(ctx) {
+        if(ctx && histogramData) {
             const canvas = canvasRef.current
             let maxHeightPixelValue = 0;
             const meanHistogram = Array(255).fill(0)
@@ -32,16 +32,14 @@ function HistogramComponent() {
                 meanHistogram[i] += pixel / 3
             })
 
-
             ctx.clearRect(0, 0, canvas.width, canvas.height)
 
             paintColorGraphLine(histogramData.r, '#eb4034', maxHeightPixelValue)
             paintColorGraphLine(histogramData.g, '#3cc94d', maxHeightPixelValue)
             paintColorGraphLine(histogramData.b, '#3598e8', maxHeightPixelValue)
             paintColorGraphLine(meanHistogram, '#ffffff', maxHeightPixelValue)
-
         }
-    }, [histogramData])
+    })
 
     const paintColorGraphLine = (colorData, graphColor, maxHeightPixelValue) => {
         const canvas = canvasRef.current
