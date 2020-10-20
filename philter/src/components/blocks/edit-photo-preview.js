@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import '../../styles/blocks/edit-photo-preview.scss';
 import Canvas from '../atoms/canvas';
 import { useStateValue } from  '../../state'
@@ -6,6 +6,7 @@ import HistogramComponent from '../atoms/histogram';
 
 function EditPhotoPreview(props) {
   const [ { imageData, image } ] = useStateValue()
+  const imageContainerRef = useRef(null)
 
 
   const saveImage = () => {
@@ -14,6 +15,13 @@ function EditPhotoPreview(props) {
     link.href = imageData.toDataURL(image.type, 1.0).replace("image/png", "image/octet-stream");
     link.click()
   }
+
+  const isImageVertical = () => 
+    imageContainerRef && imageContainerRef.current
+    && imageContainerRef.current.offsetWidth > imageContainerRef.current.offsetHeight
+    
+
+  console.log(imageContainerRef.current)
 
   return (
     <section className={ props.class }>
@@ -27,7 +35,7 @@ function EditPhotoPreview(props) {
 
       {
         props.image &&
-        <article className="image-container">
+        <article className={"image-container " + (isImageVertical() && "horizontal-image")} ref={imageContainerRef}>
           <Canvas image={props.image} className="image"></Canvas>
           <h4 className="image-name">{props.imageName}</h4>
         </article>
