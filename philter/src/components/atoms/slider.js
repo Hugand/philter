@@ -1,10 +1,11 @@
 import React from 'react'
 import Slider from 'react-input-slider';
 
-function SliderComponent({ label, value, setValue, min, max, step }) {
+function SliderComponent({ label, value, setValue, min, max, step, showLabel = true }) {
     return (
         <div className="slider-container">
-            <label className="slider-label">{ label } - { value }</label>
+            { showLabel && <label className="slider-label">{ label } - { value }</label>}
+            { !showLabel && <label className="slider-label">{ value } - </label>}
             <Slider
                 x={ value }
                 xmin={min}

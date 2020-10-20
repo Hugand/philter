@@ -24,7 +24,7 @@ function EditPhotoScreen(props) {
           imageName={ imageName }
           goBack={ goBack }></EditPhotoPreview>
         {/* <EditPhotoSidebar class="sidebar-container"></EditPhotoSidebar> */}
-        <EditPhotoSidebarMobile class="sidebar-container"></EditPhotoSidebarMobile>
+        <EditPhotoSidebarMobile class="bottom-container"></EditPhotoSidebarMobile>
     </main>)
 }
 

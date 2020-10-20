@@ -9,46 +9,64 @@ function EditPhotoSidebarMobile(props) {
   const [ {imageFilters}, dispatch ] = useStateValue()
   const [ selectedFilter, setSelectedFilter ] = useState(null);
   const filters = [
-      { label: "Exposure", id: "exposure" },
-      { label: "Contrast", id: "contrast" },
-      { label: "Highlights", id: "highlights" },
-      { label: "Shadows", id: "shadows" },
-      { label: "Hue", id: "hue" },
-      { label: "Saturation", id: "saturation" },
-      { label: "Blur", id: "blur" },
-      { label: "Noise", id: "noise" },
-      { label: "Hue", id: "hue" },
-      { label: "B/W", id: "b_w" },
-      { label: "Invert", id: "invert" }
+      { label: "Exposure", id: "exposure", min: -50, max: 50 },
+      { label: "Contrast", id: "contrast", min: -100, max: 100 },
+      { label: "Highlights", id: "highlights", min: -10, max: 10 },
+      { label: "Shadows", id: "shadows", min: -10, max: 10 },
+      { label: "Hue", id: "hue", min: -100, max: 100 },
+      { label: "Saturation", id: "saturation", min: -100, max: 100 },
+      { label: "Blur", id: "blur", min: 0, max: 5 },
+      { label: "Noise", id: "noise", min: 0, max: 100 },
+      { label: "B/W", id: "b_w", min: -0, max: 3 },
+      { label: "Invert", id: "invert_colors", isCheckbox: true, cbLabel: "Invert colors" }
   ]
 
   return (
     
-    <section>
+    <section className="bottom-bar">
+
+        { selectedFilter && 
+            <section className="bottom-bar-slider-container">
+
+                { selectedFilter.isCheckbox ? 
+                    <Checkbox
+                        label={selectedFilter.cbLabel}
+                        value={imageFilters[selectedFilter.id]}
+                        setValue={({x}) => dispatch({
+                            type: 'changeFilter',
+                            filterType: selectedFilter.id,
+                            newFilterValue: x})}
+                    ></Checkbox>
+                : 
+                    <SliderComponent
+                        label={selectedFilter.label}
+                        showLabel={false}
+                        min={selectedFilter.min}
+                        max={selectedFilter.max}
+                        value={imageFilters[selectedFilter.id]}
+                        setValue={({x}) => dispatch({
+                            type: 'changeFilter',
+                            filterType: selectedFilter.id,
+                            newFilterValue: x})}
+                    ></SliderComponent>}
+
+            </section>}
 
         <section className={ props.class } >
             {
                 filters.map(filter =>
                     <label
                         className={
-                            'sidebar-item ' +
-                            (selectedFilter === filter.id && 'selected') 
+                            'bottom-item ' +
+                            (selectedFilter && selectedFilter.id === filter.id && 'selected') 
                         }
                         
-                        onClick={() => setSelectedFilter(filter.id)} >
+                        onClick={() => !selectedFilter 
+                            ? setSelectedFilter(filter)
+                            : setSelectedFilter(null)} >
                             { filter.label }</label>
                 )
             }
-            {/* <label className="sidebar-item">Exposure</label>
-            <label className="sidebar-item">Contrast</label>
-            <label className="sidebar-item">Highlights</label>
-            <label className="sidebar-item">Shadows</label>
-            <label className="sidebar-item">Hue</label>
-            <label className="sidebar-item">Saturation</label>
-            <label className="sidebar-item">Blur</label>
-            <label className="sidebar-item">Noise</label>
-            <label className="sidebar-item">B/W</label>
-            <label className="sidebar-item">Invert</label> */}
 
             {/* 
             <HistogramComponent></HistogramComponent>

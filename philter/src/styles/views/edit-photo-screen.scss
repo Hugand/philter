@@ -14,7 +14,7 @@
             width: 100%;
         }
     
-        .sidabar-container {
+        .sidebar-container {
             grid-column: 2;
             width: 100%;
         }
@@ -22,16 +22,16 @@
 
     @include tablet() {
         grid-template-columns: none;
-        grid-template-rows: auto 88px;
+        grid-template-rows: auto 190px;
 
         .preview-container {
             grid-row: 1;
-            width: 100%;
+            width: 100vw;
         }
     
-        .sidabar-container {
+        .bottom-bar {
             grid-row: 2;
-            width: 100%;
+            width: 100vw;
         }
     }
 
