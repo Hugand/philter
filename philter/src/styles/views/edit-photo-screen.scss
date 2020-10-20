@@ -5,24 +5,21 @@
     height: 100vh;
     display: grid;
     background-color: black;
+    grid-template-columns: auto 20%;
 
-    @include hd() {
-        grid-template-columns: auto 20%;
+    .preview-container {
+        grid-column: 1;
+        width: 100%;
+    }
 
-        .preview-container {
-            grid-column: 1;
-            width: 100%;
-        }
-    
-        .sidebar-container {
-            display: flex;
-            grid-column: 2;
-            width: 100%;
-        }
+    .sidebar-container {
+        display: flex;
+        grid-column: 2;
+        width: 100%;
+    }
 
-        .bottom-bar {
-            display: none;
-        }
+    .bottom-bar {
+        display: none;
     }
 
     @include tablet() {
