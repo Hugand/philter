@@ -2,6 +2,7 @@ import React from 'react';
 import '../../styles/views/edit-photo-screen.scss';
 import { Redirect } from 'react-router-dom'
 import EditPhotoSidebar from '../blocks/edit-photo-sidebar';
+import EditPhotoSidebarMobile from '../blocks/edit-photo-sidebar-mobile';
 import EditPhotoPreview from '../blocks/edit-photo-preview';
 import { useStateValue } from '../../state'
 
@@ -22,7 +23,8 @@ function EditPhotoScreen(props) {
           image={ image }
           imageName={ imageName }
           goBack={ goBack }></EditPhotoPreview>
-        <EditPhotoSidebar class="sidebar-container"></EditPhotoSidebar>
+        {/* <EditPhotoSidebar class="sidebar-container"></EditPhotoSidebar> */}
+        <EditPhotoSidebarMobile class="sidebar-container"></EditPhotoSidebarMobile>
     </main>)
 }
 

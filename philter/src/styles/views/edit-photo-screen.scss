@@ -1,18 +1,38 @@
+@import '../resources/mixins.scss';
 
 .edit-main {
     width: 100vw;
     height: 100vh;
     display: grid;
-    grid-template-columns: auto 20%;
     background-color: black;
 
-    .preview-container {
-        grid-column: 1;
-        width: 100%;
+    @include hd() {
+        grid-template-columns: auto 20%;
+
+        .preview-container {
+            grid-column: 1;
+            width: 100%;
+        }
+    
+        .sidabar-container {
+            grid-column: 2;
+            width: 100%;
+        }
     }
 
-    .sidabar-container {
-        grid-column: 2;
-        width: 100%;
+    @include tablet() {
+        grid-template-columns: none;
+        grid-template-rows: auto 88px;
+
+        .preview-container {
+            grid-row: 1;
+            width: 100%;
+        }
+    
+        .sidabar-container {
+            grid-row: 2;
+            width: 100%;
+        }
     }
+
 }
