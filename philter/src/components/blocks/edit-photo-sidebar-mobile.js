@@ -61,7 +61,7 @@ function EditPhotoSidebarMobile(props) {
                             (selectedFilter && selectedFilter.id === filter.id && 'selected') 
                         }
                         
-                        onClick={() => !selectedFilter 
+                        onClick={() => !selectedFilter || selectedFilter && filter.id !== selectedFilter.id
                             ? setSelectedFilter(filter)
                             : setSelectedFilter(null)} >
                             { filter.label }</label>
