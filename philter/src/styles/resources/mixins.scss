@@ -1,0 +1,87 @@
+/*
+--------------------------------------------------------------------------------
+Sans serif auxiliar mixin
+--------------------------------------------------------------------------------
+*/
+@mixin sans_serif($w: 300) {
+    font-family: “Palanquin”, sans-serif;
+    font-weight: $w;
+    line-height: 120%;
+  }
+  @mixin responsive_font($min, $max, $weight:300, $line-height:1.4) {
+    line-height: $line-height;
+    font-weight: $weight;
+    font-size: #{$min}rem;
+    @include resolution(650px) {
+      font-size: calc(#{$min}rem + ((#{$max} * 10) - (#{$min} * 10)) * ((100vw - 650px) / 550));
+    }
+    @include resolution(1200px) {
+      font-size: #{$max}rem;
+    }
+  }
+  /*
+  --------------------------------------------------------------------------------
+  Desktop first queries
+  --------------------------------------------------------------------------------
+  */
+  @mixin phablet {
+    @media (max-width: 550px) {
+      @content;
+    }
+  }
+  @mixin tablet {
+    @media (max-width: 768px) {
+      @content;
+    }
+  }
+  @mixin laptop {
+    @media (max-width: 1024px) {
+      @content;
+    }
+  }
+  @mixin hd {
+    @media (max-width: 1400px) {
+      @content;
+    }
+  }
+  @mixin resolution($r) {
+    @media (max-width: #{$r}) {
+      @content;
+    }
+  }
+  /*
+  --------------------------------------------------------------------------------
+  Retina queries
+  --------------------------------------------------------------------------------
+  */
+  @mixin retina($dp) {
+    @media (-webkit-min-device-pixel-ratio: #{$dp}) {
+      @content;
+    }
+  }
+  /*
+  --------------------------------------------------------------------------------
+  Fix for mobile devices
+  --------------------------------------------------------------------------------
+  */
+  @mixin remove_tap_highlight() {
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+  }
+  /*
+  --------------------------------------------------------------------------------
+  Custom helpers
+  --------------------------------------------------------------------------------
+  */
+  @mixin no_select() {
+    user-select: none;
+  }
+  @mixin transition($duration: 0.2) {
+    transition: #{$duration}s ease-in-out;
+  }
+  @mixin ease_out() {
+    transition: 0.3s cubic-bezier(0, 0, 0.3, 0.9);
+  }
+  @mixin translate($x, $y) {
+    transform: translate($x, $y);
+  }
+  
