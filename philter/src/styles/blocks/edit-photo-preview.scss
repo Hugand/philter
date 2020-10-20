@@ -1,3 +1,4 @@
+@import '../resources/mixins.scss';
 
 .preview-container {
     background-color: white;
@@ -9,11 +10,25 @@
     header {
         display: flex;
         flex-direction: row;
+        margin-bottom: 1rem;
 
         button {
             margin: 0 0.5rem;
+            height: fit-content;
+        }
+
+        .histogram-container {
+            display: none;
+
+            @include tablet() {
+                display: block;
+                width: 45%;
+                margin-left: auto;
+                box-shadow: 0px 0px 20px 2px #1d282e1a;
+            }
         }
     }
+
 
     .image-container {
         width: auto;
@@ -21,8 +36,15 @@
         margin: auto;
         display: flex;
         flex-direction: column;
-        width:70%;
         height: fit-content;
+
+        @include hd {
+            width:70%;
+        }
+
+        @include tablet {
+            width: 100%;
+        }
 
         .image {
             object-fit: contain;

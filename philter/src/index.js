@@ -10,6 +10,9 @@ import { StateProvider } from './state'
 const initialState = {
   imageName: '',
   image: null,
+  imageData: null,
+  realSizedCanvas: null,
+  histogramData: null,
   imageFilters: {
     exposure: 0,
     contrast: 0,
@@ -47,6 +50,16 @@ const reducer = (state, action) => {
       return {
         ...state,
         histogramData: action.newHistogramData
+      }
+    case 'updateNewImageData':
+      return {
+        ...state,
+        imageData: action.newImageData
+      }
+    case 'updateRealSizedCanvas':
+      return {
+        ...state,
+        realSizedCanvas: action.newrealSizedCanvas
       }
     default:
       return state

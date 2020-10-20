@@ -4,7 +4,7 @@ import ImagePicker from '../atoms/image-picker'
 import { useStateValue } from  '../../state'
 
 function HomeScreen(props) {
-  const [ _ , dispatch ] = useStateValue()
+  const dispatch = useStateValue()[1]
   const handlePhotoSelection = (img) => {
     dispatch({
       type: 'changeImage',

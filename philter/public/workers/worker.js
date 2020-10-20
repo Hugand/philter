@@ -8,6 +8,7 @@ wasmPhilter("./wasm-philter/js/wasm_philter_bg.wasm")
   const { apply_filters } = wasmPhilter
 
   onmessage = async e => {
+
     const { img, imageFilters, canvasWidth, canvasHeight } = e.data;
     const {
       exposure,

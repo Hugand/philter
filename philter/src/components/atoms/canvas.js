@@ -1,42 +1,89 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useStateValue } from  '../../state'
+import { scaleToFit, resizeImageData } from '../../helpers/imageHelpers'
 
 function Canvas(props) {
     const [ { imageFilters, image }, dispatch ] = useStateValue()
-    const imageObject = new Image()
-    const [imageData, setImageData] = useState()
-
-    const canvasRef = useRef(null)
-    const [ canvas, setCanvas ] = useState(null)
-    const [ ctx, setCtx ] = useState(null)
-    const [ canvasWidth, setCanvasWidth ] = useState(window.innerWidth)
-    const [ canvasHeight, setCanvasHeight ] = useState(window.innerHeight)
-
     const [ worker, setWorker ] = useState()
     const [ applyFilterTimeout, setApplyFilterTimeout ] = useState()
+    const [ realSizedImageData, setRealSizedImageData ] = useState()
+    const adjustedCanvasRef = useRef(null)
+    const realCanvasRef = useRef(null)
+    
+    const [ realCanvas, setRealCanvas ] = useState({
+        canvas: null,
+        ctx: null,
+        dims: [0, 0]
+    })
+
+    const [ adjustedCanvas, setAdjustedCanvas ] = useState({
+        canvas: null,
+        ctx: null,
+        dims: [window.innerWidth, window.innerHeight]
+    })
 
     useEffect(() => {
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext('2d')
-        setCanvas(canvas)
-        setCtx(ctx)
+        const imageObject = new Image()
+        const adjustedCanv = adjustedCanvasRef.current
+        const realCanv = realCanvasRef.current
+        const adjustedCtx = adjustedCanv.getContext('2d')
+        const realCtx = realCanv.getContext('2d')
+        
+        setAdjustedCanvas({
+            ...adjustedCanvas,
+            canvas: adjustedCanv,
+            ctx: adjustedCtx
+        })
+        setRealCanvas({
+            ...realCanvas,
+            canvas: realCanv,
+            ctx: realCtx
+        })
+
         imageObject.onload = () => {
-            const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, canvas)
+            const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, adjustedCanv)
 
-            setCanvasWidth(newCanvasWidth)
-            setCanvasHeight(newCanvasHeight)
+            setAdjustedCanvas({
+                ...adjustedCanvas,
+                dims: [ newCanvasWidth, newCanvasHeight ]
+            })
+            setRealCanvas({
+                ...realCanvas,
+                dims: [ imageObject.width, imageObject.height ]
+            })
 
-            ctx.drawImage(imageObject, 1, 1, newCanvasWidth-2, newCanvasHeight-2);
+            realCtx.drawImage(imageObject, 0, 0, imageObject.width, imageObject.height);
+            adjustedCtx.drawImage(imageObject, 1, 1, newCanvasWidth-2, newCanvasHeight-2);
             
-            const newImageData = ctx.getImageData(0, 0, newCanvasWidth, newCanvasHeight)
+            const newRealSizedImageData = realCtx.getImageData(0, 0, imageObject.width, imageObject.height)
 
-            setImageData(newImageData)
-            getHistogramData(newImageData)
-            setWorkerObject(ctx, newCanvasWidth, newCanvasHeight, newImageData)
-
+            setRealSizedImageData(newRealSizedImageData)
+            getHistogramData(newRealSizedImageData)
+            setWorkerObject(
+                realCtx,
+                [ imageObject.width, imageObject.height ],
+                adjustedCtx,
+                [ newCanvasWidth, newCanvasHeight ],
+                realCanvasRef
+            )
         }
         imageObject.src = URL.createObjectURL(image)
     }, [])
+    
+    // Using timeouts here to avoid web worker overload
+    useEffect(() => {
+        clearTimeout(applyFilterTimeout)
+        setApplyFilterTimeout(
+            setTimeout(() => {
+                if(realCanvas && realSizedImageData)
+                    worker.postMessage({
+                        img: realSizedImageData.data,
+                        imageFilters,
+                        canvasWidth: realCanvas.dims[0],
+                        canvasHeight: realCanvas.dims[1]
+                    });
+            }, 300))
+    }, [ imageFilters ])
 
     const getHistogramData = (imgData) => {
         const histogramData =  {
@@ -63,52 +110,39 @@ function Canvas(props) {
         })
     }
 
-    const setWorkerObject = (ctx, canvasWidth, canvasHeight, imgData) => {
+    const setWorkerObject = (realCtx, realDims, adjustedCtx, adjustedDims, realCanvasRef) => {
         const workerBuf = new Worker('./workers/worker.js')
 
-        workerBuf.onmessage = e => {
-            ctx.putImageData(new ImageData(new Uint8ClampedArray(e.data.filtered), canvasWidth, canvasHeight), 0, 0)
+        workerBuf.onmessage = async e => {
+            const newImageData = new ImageData(new Uint8ClampedArray(e.data.filtered), realDims[0], realDims[1])
+            realCtx.putImageData(newImageData, 0, 0)
+            adjustedCtx.putImageData(await resizeImageData(newImageData, adjustedDims[0], adjustedDims[1]), 0, 0)
             dispatch({
                 type: 'updateHistogramData',
                 newHistogramData: e.data.histogram_data
+            })
+            dispatch({
+                type: 'updateNewImageData',
+                newImageData: realCanvasRef.current
             })
         };
         setWorker(workerBuf)
     }
 
-    // Using timeouts here to avoid web worker overload
-    useEffect(() => {
-        clearTimeout(applyFilterTimeout)
-        setApplyFilterTimeout(
-            setTimeout(() => {
-                if(canvas && ctx && imageData)
-                    worker.postMessage({
-                        img: imageData.data,
-                        imageFilters,
-                        canvasWidth,
-                        canvasHeight
-                    });
-            }, 300))
-    }, [imageFilters])
 
-    return <canvas
-        ref={canvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-        {...props} />;
-}
-
-function scaleToFit(img, canvas){
-    // get the scale
-    var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-    // get the top left position of the image
-    var x = (canvas.width / 2) - (img.width / 2) * scale;
-    var y = (canvas.height / 2) - (img.height / 2) * scale;
-
-    const canvasWidth = img.width * scale
-    const canvasHeight = img.height * scale
-
-    return [ parseInt(canvasWidth+2), parseInt(canvasHeight+2) ]
+    return <>
+        <canvas
+            ref={realCanvasRef}
+            width={realCanvas.dims ? realCanvas.dims[0] : 0}
+            height={realCanvas.dims ? realCanvas.dims[1] : 0}
+            style={{display: 'none'}} />
+            
+        <canvas
+            ref={adjustedCanvasRef}
+            width={adjustedCanvas.dims ? adjustedCanvas.dims[0] : window.innerWidth}
+            height={adjustedCanvas.dims ? adjustedCanvas.dims[1] : window.innerHeight}
+            {...props} />
+    </>;
 }
 
 export default Canvas;
