@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useStateValue } from  '../../state'
-import { scaleToFit, resizeImageData } from '../../helpers/imageHelpers'
+import { scaleToFit } from '../../helpers/imageHelpers'
 
 function Canvas(props) {
     const [ { imageFilters, image }, dispatch ] = useStateValue()
@@ -42,14 +42,16 @@ function Canvas(props) {
 
         imageObject.onload = () => {
             const [ newCanvasWidth, newCanvasHeight ] = scaleToFit(imageObject, adjustedCanv)
+            const realDims = [ imageObject.width, imageObject.height ]
+            const adjustedDims = [ newCanvasWidth, newCanvasHeight ]
 
             setAdjustedCanvas({
                 ...adjustedCanvas,
-                dims: [ newCanvasWidth, newCanvasHeight ]
+                dims: adjustedDims
             })
             setRealCanvas({
                 ...realCanvas,
-                dims: [ imageObject.width, imageObject.height ]
+                dims: realDims
             })
 
             realCtx.drawImage(imageObject, 0, 0, imageObject.width, imageObject.height);
@@ -57,14 +59,18 @@ function Canvas(props) {
             
             const newRealSizedImageData = realCtx.getImageData(0, 0, imageObject.width, imageObject.height)
 
+            const wScale = adjustedDims[0] / realDims[0]
+            const hScale = adjustedDims[1] / realDims[1]
+
+            adjustedCtx.scale(wScale, hScale)
+
             setRealSizedImageData(newRealSizedImageData)
             getHistogramData(newRealSizedImageData)
             setWorkerObject(
                 realCtx,
-                [ imageObject.width, imageObject.height ],
+                realDims,
                 adjustedCtx,
-                [ newCanvasWidth, newCanvasHeight ],
-                realCanvasRef
+                realCanvasRef.current
             )
         }
         imageObject.src = URL.createObjectURL(image)
@@ -110,37 +116,38 @@ function Canvas(props) {
         })
     }
 
-    const setWorkerObject = (realCtx, realDims, adjustedCtx, adjustedDims, realCanvasRef) => {
+    const setWorkerObject = (realCtx, realDims, adjustedCtx, realCanvasRef) => {
         const workerBuf = new Worker('./workers/worker.js')
 
         workerBuf.onmessage = async e => {
             const newImageData = new ImageData(new Uint8ClampedArray(e.data.filtered), realDims[0], realDims[1])
             realCtx.putImageData(newImageData, 0, 0)
-            adjustedCtx.putImageData(await resizeImageData(newImageData, adjustedDims[0], adjustedDims[1]), 0, 0)
+            adjustedCtx.drawImage(realCanvasRef, 0, 0)
+
             dispatch({
                 type: 'updateHistogramData',
                 newHistogramData: e.data.histogram_data
             })
             dispatch({
                 type: 'updateNewImageData',
-                newImageData: realCanvasRef.current
+                newImageData: realCanvasRef
             })
         };
         setWorker(workerBuf)
     }
 
 
-    return <>
+    return adjustedCanvas.dims && realCanvas.dims && <>
         <canvas
             ref={realCanvasRef}
-            width={realCanvas.dims ? realCanvas.dims[0] : 0}
-            height={realCanvas.dims ? realCanvas.dims[1] : 0}
+            width={ realCanvas.dims[0] }
+            height={ realCanvas.dims[1] }
             style={{display: 'none'}} />
             
         <canvas
             ref={adjustedCanvasRef}
-            width={adjustedCanvas.dims ? adjustedCanvas.dims[0] : window.innerWidth}
-            height={adjustedCanvas.dims ? adjustedCanvas.dims[1] : window.innerHeight}
+            width={adjustedCanvas.dims[0]}
+            height={adjustedCanvas.dims[1]}
             {...props} />
     </>;
 }

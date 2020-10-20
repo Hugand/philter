@@ -1,3 +1,4 @@
+@import '../resources/mixins.scss';
 
 body {
     background-color: black;
@@ -20,6 +21,10 @@ body {
                 text-transform: uppercase;
                 margin: 1rem;
                 margin-left: 2rem;
+
+                @include tablet() {
+                    font-size: 1.5rem;
+                }
             }
             
             .about {
@@ -27,6 +32,10 @@ body {
                 margin: auto;
                 margin-right: 6rem;
                 margin-left: auto;
+
+                @include tablet() {
+                    font-size: 0.7rem;
+                }
             }
         }
 
