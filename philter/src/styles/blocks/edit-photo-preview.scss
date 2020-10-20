@@ -1,3 +1,4 @@
+@import '../resources/mixins.scss';
 
 .preview-container {
     background-color: white;
@@ -21,8 +22,15 @@
         margin: auto;
         display: flex;
         flex-direction: column;
-        width:70%;
         height: fit-content;
+
+        @include hd {
+            width:70%;
+        }
+
+        @include tablet {
+            width: 100%;
+        }
 
         .image {
             object-fit: contain;

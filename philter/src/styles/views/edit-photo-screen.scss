@@ -15,8 +15,13 @@
         }
     
         .sidebar-container {
+            display: flex;
             grid-column: 2;
             width: 100%;
+        }
+
+        .bottom-bar {
+            display: none;
         }
     }
 
@@ -30,8 +35,13 @@
         }
     
         .bottom-bar {
+            display: flex;
             grid-row: 2;
             width: 100vw;
+        }
+
+        .sidebar-container{ 
+            display: none;
         }
     }
 
